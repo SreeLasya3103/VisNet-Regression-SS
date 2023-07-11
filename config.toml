@@ -1,0 +1,15 @@
+modelPath = "/home/feet/Repos/Visibility-Model/model-files/Integrated-3x112x112-3.pt"
+imgDim = [112, 112]
+#maskDim = [12, 28]
+batchSize = 16
+epochs = 80
+learningRate = 0.00001
+dataPath = "/home/feet/foggy-cityscapes-scaled/"
+numClasses = 3
+channels = 3
+#classes = ["50m", "100m", "150m", "200m", "250m", "300m", "400m"]
+classes = ["150m", "300m", "600m"]
+mode = "TRAIN"
+dataset = "FCS"
+model = "INTEGRATED"
+try_cuda = false

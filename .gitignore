@@ -1,0 +1,4 @@
+.conda/
+.vscode/
+model-files/*
+**/__pycache__/
