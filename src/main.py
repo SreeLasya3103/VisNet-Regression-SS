@@ -40,16 +40,29 @@ def main():
         print('No mode specified!')
     
 def train(config, use_cuda):
+    model_module = None
+    
+    if config['model'] == 'VISNET':
+        model_module = VisNet
+        #VisNet.train_classification(config, use_cuda, dataset)
+    elif config['model'] == 'INTEGRATED':
+        model_module = Integrated
+        #Integrated.train_classification(config, use_cuda, dataset)
+    elif config['model'] == 'RMEP':
+        model_module = RMEP
+        #RMEP.train_classification(config, use_cuda, dataset)
+        
     dataset = None
     if config['dataset'] == 'FCS':
         dataset = fcs.FoggyCityscapesDBF
+        model_module.train_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'FROSI':
         dataset = frosi.FROSI
+        model_module.train_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'OTHER':
+        dataset = None
+        model_module.train_regression(config, use_cuda, dataset)
     
-    if config['model'] == 'VISNET':
-        VisNet.train_classification(config, use_cuda, dataset)
-    elif config['model'] == 'INTEGRATED':
-        Integrated.train_classification(config, use_cuda, dataset)
         
             
     

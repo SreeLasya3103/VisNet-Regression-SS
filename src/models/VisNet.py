@@ -6,6 +6,7 @@ import copy
 from progress.bar import Bar
 import numpy as np
 import matplotlib
+import torcheval.metrics
 
 #****************************
 #*******HEIGHT FIRST*********
@@ -132,7 +133,7 @@ def train_classification(config, use_cuda, dataset):
     optimizer = torch.optim.Adam(model.parameters(), config['learningRate'])
     
     metrics_file = open('results.csv', 'a')
-    metrics_file.write('training loss,training accuracy,validation loss, validation accuracy\n')
+    metrics_file.write('training loss,training accuracy,validation loss,validation accuracy\n')
     metrics_file.close()
     
     best_val = (0.0, 0.0)
@@ -223,3 +224,115 @@ def train_classification(config, use_cuda, dataset):
             (val_accuracy == best_val[1] and val_loss < best_val[0])):
             best_val = (val_loss, val_accuracy)
             model.save('best-acc.pt')
+
+def train_regression(config, use_cuda, dataset):
+    print('Preparing dataset...')
+    
+    if config['channels'] == 1:
+        cmap = gray_fog_highlight
+    elif config['channels'] == 3:
+        cmap = pc_cmap
+    
+    train_set = dataset(config['dataPath'], 'train', config['imgDim'], config['channels'], cmap, 'BLUE', config['maskDim'])
+    val_set = dataset(config['dataPath'], 'val', config['imgDim'], config['channels'], cmap, 'BLUE', config['maskDim'])
+    
+    train_loader = DataLoader(train_set, config['batchSize'], True, collate_fn=dataset.collate_fn)
+    val_loader = DataLoader(val_set, config['batchSize'], collate_fn=dataset.collate_fn)
+    
+    print('Preparing model...')
+    model = torch.jit.load(config['modelPath']);
+    if use_cuda:
+        model.cuda()
+    
+    loss_fn = nn.SmoothL1Loss()
+    optimizer = torch.optim.Adam(model.parameters(), config['learningRate'])
+    
+    metrics_file = open('results.csv', 'a')
+    metrics_file.write('training MAE,training R2,validation MAE,validation R2\n')
+    metrics_file.close()
+    
+    best_val = (0.0, 0.0)
+    
+    for epoch in range(config['epochs']):
+        print('\nEpoch ' + str(epoch+1))
+        print('Training...')
+        
+        model.train()
+        
+        running_loss = 0.0
+        
+        all_outputs = torch.empty()
+        all_labels = torch.empty()
+        
+        bar = Bar()
+        bar.max = len(train_loader)
+        for step, (data, labels) in enumerate(train_loader):
+            total += labels.size(0)
+
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.to(torch.device('cuda'))
+
+            optimizer.zero_grad()
+            
+            output = model(data.float())
+            all_outputs = torch.cat((all_outputs, output))
+            all_labels = torch.cat((all_labels, labels))
+            loss = loss_fn(output, labels)
+            loss.backward()
+            
+            optimizer.step()
+            
+            running_loss += loss.item()
+
+            bar.next()
+        
+        train_loss = running_loss/total
+        train_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels)
+        print('\nTraining MAE: ' + str(train_loss))
+        print('Training R2: ' + str(train_r2))
+
+        print('Validating...')
+        running_loss = 0.0
+        all_outputs = torch.empty()
+        all_labels = torch.empty()
+        
+        with torch.no_grad():
+            model.eval()
+            
+            bar = Bar()
+            bar.max = len(val_loader)
+            for step, (data, labels) in enumerate(val_loader):
+                total += labels.size(0)
+
+                if use_cuda:
+                    data = data.cuda()
+                    labels = labels.cuda()
+
+                output = model(data.float())
+                all_outputs = torch.cat((all_outputs, output))
+                all_labels = torch.cat((all_labels, labels))
+                loss = loss_fn(output, labels)
+                
+                running_loss += loss.item()
+
+                bar.next()
+        
+        val_loss = running_loss/total
+        val_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels)
+        print('\nValidation MAE: ' + str(val_loss))
+        print('Validation R2: ' + str(val_r2))
+        
+        metrics_file = open('results.csv', 'a')
+        metrics_file.write(str(train_loss) + ',' +
+                           str(train_r2) + ',' +
+                           str(val_loss) + ',' +
+                           str(val_r2) + '\n')
+        metrics_file.close()
+        
+        model.save('last.pt')
+        
+        if (val_r2 > best_val[1] or
+            (val_r2 == best_val[1] and val_loss < best_val[0])):
+            best_val = (val_loss, val_r2)
+            model.save('best-r2.pt')
