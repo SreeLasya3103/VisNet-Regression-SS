@@ -178,31 +178,32 @@ def train_classification(config, use_cuda, dataset):
         print('Training accuracy: ' + str(train_accuracy))
 
         print('Validating...')
-        model.eval()
-        
         correct = 0
         total = 0
         running_loss = 0.0
         
-        bar = Bar()
-        bar.max = len(val_loader)
-        for step, (data, labels) in enumerate(val_loader):
-            total += labels.size(0)
-
-            if use_cuda:
-                data = data.cuda()
-                labels = labels.cuda()
-
-            output = model(data.float())
-            loss = loss_fn(output, labels)
+        with torch.no_grad():
+            model.eval()
             
-            running_loss += loss.item()
-            
-            for i in range(output.size(0)):
-                if output[i].argmax() == labels[i].argmax():
-                    correct = correct + 1
+            bar = Bar()
+            bar.max = len(val_loader)
+            for step, (data, labels) in enumerate(val_loader):
+                total += labels.size(0)
 
-            bar.next()
+                if use_cuda:
+                    data = data.cuda()
+                    labels = labels.cuda()
+
+                output = model(data.float())
+                loss = loss_fn(output, labels)
+                
+                running_loss += loss.item()
+                
+                for i in range(output.size(0)):
+                    if output[i].argmax() == labels[i].argmax():
+                        correct = correct + 1
+
+                bar.next()
         
         val_loss = running_loss/total
         val_accuracy = correct/total
