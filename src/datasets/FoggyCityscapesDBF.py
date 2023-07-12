@@ -39,7 +39,7 @@ def highpass_filter(img, mask_dim):
 
 class FoggyCityscapesDBF(Dataset):
     def __init__(self, dataset_dir, set_type, img_dim, channels=3, cmap=None, grayscale_type='AVERAGE', mask_dim=None):
-        self.files = glob.glob(dataset_dir + '/**/*.png', recursive=True)
+        self.files = glob.glob(os.path.join(dataset_dir, set_type) + '/**/*.png', recursive=True)
         self.img_dim = img_dim
         self.cmap = cmap
         self.mask_dim = mask_dim
