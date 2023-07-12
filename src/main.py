@@ -1,17 +1,20 @@
 import torch
-import tomllib
+import tomli
 import sys
-sys.path.append("src/datasets")
+import os
+ROOT_DIR = os.path.dirname(__file__)
+print(ROOT_DIR)
+sys.path.append(os.path.join(ROOT_DIR, 'datasets'))
 import FoggyCityscapesDBF as fcs
 import FROSI as frosi
-sys.path.append('src/models')
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP
 import VisNet
     
 def main():
     f = open('config.toml', 'rb')
-    config = tomllib.load(f)
+    config = tomli.load(f)
 
     try_cuda = True
     if 'try_cuda' in config:

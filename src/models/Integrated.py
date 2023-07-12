@@ -9,7 +9,7 @@ import matplotlib
 #****************************
 #*******HEIGHT FIRST*********
 #****************************
-IMG_SIZE = (112, 112)
+IMG_SIZE = (200, 400)
 NUM_CLASSES = 3
 NUM_CHANNELS = 3
 

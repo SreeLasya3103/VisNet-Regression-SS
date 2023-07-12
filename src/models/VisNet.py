@@ -10,11 +10,14 @@ import matplotlib
 #****************************
 #*******HEIGHT FIRST*********
 #****************************
-IMG_SIZE = (60, 140)
-NUM_CLASSES = 7
+IMG_SIZE = (112, 112)
+NUM_CLASSES = 3
 NUM_CHANNELS = 3
 
-pc_cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#0000ff', '#00ff00', '#ff0000'])
+pc_cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#3F003F', '#7E007E',
+                                                                   '#4300BD', '#0300FD', '#003F82',
+                                                                   '#007D05', '#7CBE00', '#FBFE00',
+                                                                   '#FF7F00', '#FF0500'])
 
 def gray_fog_highlight(img):
     img = img.numpy()
@@ -122,7 +125,7 @@ def train_classification(config, use_cuda, dataset):
     print('Preparing model...')
     model = torch.jit.load(config['modelPath']);
     if use_cuda:
-        model.to(torch.device('cuda'))
+        model.cuda()
     
     
     loss_fn = nn.CrossEntropyLoss()
@@ -148,7 +151,11 @@ def train_classification(config, use_cuda, dataset):
         bar.max = len(train_loader)
         for step, (data, labels) in enumerate(train_loader):
             total += labels.size(0)
-            
+
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.to(torch.device('cuda'))
+
             optimizer.zero_grad()
             
             output = model(data.float())
@@ -181,7 +188,11 @@ def train_classification(config, use_cuda, dataset):
         bar.max = len(val_loader)
         for step, (data, labels) in enumerate(val_loader):
             total += labels.size(0)
-            
+
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.cuda()
+
             output = model(data.float())
             loss = loss_fn(output, labels)
             

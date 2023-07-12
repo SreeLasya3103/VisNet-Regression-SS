@@ -5,6 +5,7 @@ import os
 from PIL import Image
 import torchvision.transforms.functional as vfunc
 import numpy
+import glob
 
 def resize_crop(img, img_dim):
     target_ratio = img_dim[0] / img_dim[1]
@@ -38,11 +39,7 @@ def highpass_filter(img, mask_dim):
 
 class FoggyCityscapesDBF(Dataset):
     def __init__(self, dataset_dir, set_type, img_dim, channels=3, cmap=None, grayscale_type='AVERAGE', mask_dim=None):
-        self.files = []
-        for filename in os.listdir(os.path.join(dataset_dir, set_type)):
-            f = os.path.join(dataset_dir, set_type, filename)
-            self.files.append(f)
-            
+        self.files = glob.glob(dataset_dir + '/**/*.png', recursive=True)
         self.img_dim = img_dim
         self.cmap = cmap
         self.mask_dim = mask_dim
