@@ -206,6 +206,10 @@ def train_classification(config, use_cuda, dataset):
         for step, (data, labels) in enumerate(train_loader):
             total += labels.size(0)
             
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.cuda()
+            
             optimizer.zero_grad()
             
             output = model(data.float())
