@@ -71,7 +71,7 @@ class RMEP(nn.Module):
         self.model = nn.Sequential(*model);
     
     def forward(self, x):
-        return self.model(x)
+        return self.model(x[0])
 
 def create_and_save():
     net = RMEP()
