@@ -71,7 +71,7 @@ class RMEP(nn.Module):
         self.model = nn.Sequential(*model);
     
     def forward(self, x):
-        return self.model(x[0])
+        return self.model(x)
 
 def create_and_save():
     net = RMEP()
@@ -122,6 +122,8 @@ def train_classification(config, use_cuda, dataset):
         for step, (data, labels) in enumerate(train_loader):
             total += labels.size(0)
 
+            data = data[0]
+            
             if use_cuda:
                 data = data.cuda()
                 labels = labels.to(torch.device('cuda'))
@@ -159,6 +161,8 @@ def train_classification(config, use_cuda, dataset):
             bar.max = len(val_loader)
             for step, (data, labels) in enumerate(val_loader):
                 total += labels.size(0)
+                
+                data = data[0]
 
                 if use_cuda:
                     data = data.cuda()
