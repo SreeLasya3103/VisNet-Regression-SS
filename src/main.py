@@ -9,7 +9,7 @@ import FoggyCityscapesDBF as fcs
 import FROSI as frosi
 sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
-import RMEP
+import RMEP as rmep
 import VisNet
     
 def main():
@@ -44,13 +44,10 @@ def train(config, use_cuda):
     
     if config['model'] == 'VISNET':
         model_module = VisNet
-        #VisNet.train_classification(config, use_cuda, dataset)
     elif config['model'] == 'INTEGRATED':
         model_module = Integrated
-        #Integrated.train_classification(config, use_cuda, dataset)
     elif config['model'] == 'RMEP':
-        model_module = RMEP
-        #RMEP.train_classification(config, use_cuda, dataset)
+        model_module = rmep
         
     dataset = None
     if config['dataset'] == 'FCS':
