@@ -313,7 +313,7 @@ def train_regression(config, use_cuda, dataset):
         model.train()
         
         running_loss = 0.0
-        
+        total = 0
         all_outputs = torch.empty((0, 1))
         all_labels = torch.empty((0, 1))
         
@@ -347,6 +347,7 @@ def train_regression(config, use_cuda, dataset):
 
         print('Validating...')
         running_loss = 0.0
+        total = 0
         all_outputs = torch.empty((0, 1))
         all_labels = torch.empty((0, 1))
         
