@@ -261,8 +261,8 @@ def train_regression(config, use_cuda, dataset):
         
         running_loss = 0.0
         total = 0
-        all_outputs = torch.empty((0, 1))
-        all_labels = torch.empty((0, 1))
+        all_outputs = torch.empty((0, 1)).cuda()
+        all_labels = torch.empty((0, 1)).cuda()
         
         bar = Bar()
         bar.max = len(train_loader)
@@ -295,8 +295,8 @@ def train_regression(config, use_cuda, dataset):
         print('Validating...')
         running_loss = 0.0
         total = 0
-        all_outputs = torch.empty((0, 1))
-        all_labels = torch.empty((0, 1))
+        all_outputs = torch.empty((0, 1)).cuda()
+        all_labels = torch.empty((0, 1)).cuda()
         
         with torch.no_grad():
             model.eval()
