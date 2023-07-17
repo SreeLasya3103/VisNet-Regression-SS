@@ -288,7 +288,7 @@ def train_regression(config, use_cuda, dataset):
             bar.next()
         
         train_loss = running_loss/total
-        train_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels)
+        train_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels).item()
         print('\nTraining MAE: ' + str(train_loss))
         print('Training R2: ' + str(train_r2))
 
@@ -320,7 +320,7 @@ def train_regression(config, use_cuda, dataset):
                 bar.next()
         
         val_loss = running_loss/total
-        val_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels)
+        val_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels).item()
         print('\nValidation MAE: ' + str(val_loss))
         print('Validation R2: ' + str(val_r2))
         
