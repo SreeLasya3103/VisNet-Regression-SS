@@ -58,7 +58,7 @@ def train(config, use_cuda):
         dataset = frosi.FROSI
         model_module.train_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF':
-        dataset = ssf.SSF
+        dataset = ssf.SSF_reg
         model_module.train_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'OTHER':
         dataset = None
