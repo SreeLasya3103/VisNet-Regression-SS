@@ -7,6 +7,7 @@ print(ROOT_DIR)
 sys.path.append(os.path.join(ROOT_DIR, 'datasets'))
 import FoggyCityscapesDBF as fcs
 import FROSI as frosi
+import SSF as ssf
 sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP as rmep
@@ -56,6 +57,9 @@ def train(config, use_cuda):
     elif config['dataset'] == 'FROSI':
         dataset = frosi.FROSI
         model_module.train_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'SSF':
+        dataset = ssf.SSF
+        model_module.train_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'OTHER':
         dataset = None
         model_module.train_regression(config, use_cuda, dataset)
