@@ -243,6 +243,8 @@ def train_regression(config, use_cuda, dataset):
         for step, (data, labels) in enumerate(train_loader):
             total += labels.size(0)
 
+            data = data[0]
+
             if use_cuda:
                 data = data.cuda()
                 labels = labels.to(torch.device('cuda'))
@@ -283,6 +285,8 @@ def train_regression(config, use_cuda, dataset):
             bar.max = len(val_loader)
             for step, (data, labels) in enumerate(val_loader):
                 total += labels.size(0)
+
+                data = data[0]
 
                 if use_cuda:
                     data = data.cuda()
