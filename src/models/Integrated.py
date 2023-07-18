@@ -1,3 +1,4 @@
+from math import sqrt
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
@@ -301,7 +302,7 @@ def train_regression(config, use_cuda, dataset):
     optimizer = torch.optim.Adam(model.parameters(), config['learningRate'])
     
     metrics_file = open('results.csv', 'a')
-    metrics_file.write('training MAE,training R2,validation MAE,validation R2\n')
+    metrics_file.write('training MAE,training R2,training RMSE,validation MAE,validation R2,validation RMSE\n')
     metrics_file.close()
     
     best_val = (0.0, 0.0)
@@ -316,6 +317,7 @@ def train_regression(config, use_cuda, dataset):
         total = 0
         all_outputs = torch.empty((0, 1)).cuda()
         all_labels = torch.empty((0, 1)).cuda()
+        running_rmse = 0.0
         
         bar = Bar()
         bar.max = len(train_loader)
@@ -337,19 +339,23 @@ def train_regression(config, use_cuda, dataset):
             optimizer.step()
             
             running_loss += loss.item()
+            running_rmse += sqrt(nn.MSELoss()(output, labels).item())
 
             bar.next()
         
         train_loss = running_loss/total
         train_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels).item()
+        train_rmse = running_rmse/total
         print('\nTraining MAE: ' + str(train_loss))
         print('Training R2: ' + str(train_r2))
+        print('Training RMSE: ' + str(train_rmse))
 
         print('Validating...')
         running_loss = 0.0
         total = 0
         all_outputs = torch.empty((0, 1)).cuda()
         all_labels = torch.empty((0, 1)).cuda()
+        running_rmse = 0.0
         
         with torch.no_grad():
             model.eval()
@@ -369,19 +375,24 @@ def train_regression(config, use_cuda, dataset):
                 loss = loss_fn(output, labels)
                 
                 running_loss += loss.item()
+                running_rmse += sqrt(nn.MSELoss()(output, labels).item())
 
                 bar.next()
         
         val_loss = running_loss/total
         val_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels).item()
+        val_rmse = running_rmse/total
         print('\nValidation MAE: ' + str(val_loss))
         print('Validation R2: ' + str(val_r2))
+        print('Validation RMSE: ' + str(val_rmse))
         
         metrics_file = open('results.csv', 'a')
         metrics_file.write(str(train_loss) + ',' +
                            str(train_r2) + ',' +
+                           str(train_rmse) + ',' +
                            str(val_loss) + ',' +
-                           str(val_r2) + '\n')
+                           str(val_r2) + ',' +
+                           str(val_rmse) + '\n')
         metrics_file.close()
         
         model.save('last.pt')
