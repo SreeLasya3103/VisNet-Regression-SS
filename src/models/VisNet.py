@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib
 import torcheval.metrics
 
+import torchvision.transforms as T
+
 #****************************
 #*******HEIGHT FIRST*********
 #****************************

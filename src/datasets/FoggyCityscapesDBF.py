@@ -1,11 +1,13 @@
 import torch
 from torchvision import transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import os
 from PIL import Image
 import torchvision.transforms.functional as vfunc
-import numpy
 import glob
+import math
+import warnings
+warnings.filterwarnings('ignore')
 
 def resize_crop(img, img_dim):
     target_ratio = img_dim[0] / img_dim[1]
@@ -21,20 +23,40 @@ def resize_crop(img, img_dim):
     return img
 
 def highpass_filter(img, mask_dim):
+
+    ##mask = torch.ones((1, mask_dim[0], mask_dim[0]), dtype=torch.float)
+    ##for i in range(0, mask_dim[0]):
+    ##    for j in range(0, mask_dim[0]):
+    ##        value = math.sqrt((mask_dim[0]/2 - i)**2 + (mask_dim[0]/2 - j)**2) / (mask_dim[0]/2)
+    ##        if value > 1.0:
+    ##            value = 1.0
+    ##        elif value > 0.8:
+    ##            value = (value - 0.8) / 0.2
+    ##        else:
+    ##            value = 0.0
+    ##        
+    ##        mask[0][i][j] = value
+
+    ##mask = transforms.Resize(mask_dim, antialias=False)(mask)
+
+    #transforms.ToPILImage()(mask).save('z.png')
+    
+    mask = torch.zeros((1, *mask_dim), dtype=torch.float)
+
     orig_dim = (img.size(1), img.size(2))
-    img = torch.fft.rfft2(img)
+    img = torch.fft.fft2(img)
     img = torch.fft.fftshift(img)
     
     h_start = img.size(1)//2 - mask_dim[0]//2
-    w_start = img.size(2)//2 - mask_dim[0]//2//2
+    w_start = img.size(2)//2 - mask_dim[0]//2
 
     for i in range(h_start, h_start+mask_dim[0]):
-        for j in range(w_start, w_start+mask_dim[1]//2):
-            img[0][i][j] = 0
+        for j in range(w_start, w_start+mask_dim[1]):
+            img[0][i][j] *= mask[0][i-h_start][j-w_start]
 
     img = torch.fft.ifftshift(img)    
-    img = torch.fft.irfft2(img, orig_dim)
-    
+    img = torch.fft.ifft2(img)
+    img = img.type(torch.float)
     return img
 
 class FoggyCityscapesDBF(Dataset):
