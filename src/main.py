@@ -8,6 +8,7 @@ sys.path.append(os.path.join(ROOT_DIR, 'datasets'))
 import FoggyCityscapesDBF as fcs
 import FROSI as frosi
 import SSF as ssf
+import SSF_YCbCr as ssf_YCbCr
 sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP as rmep
@@ -59,6 +60,12 @@ def train(config, use_cuda):
         model_module.train_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF':
         dataset = ssf.SSF_reg
+        model_module.train_regression(config, use_cuda, dataset)
+    elif config['dataset'] == 'SSF_YCbCr':
+        if config['model'] != 'RMEP':
+            print('YCbCr can only be used with RMEP')
+            exit()
+        dataset = ssf_YCbCr.SSF_Reg
         model_module.train_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'OTHER':
         dataset = None

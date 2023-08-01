@@ -14,8 +14,8 @@ import RMEP as rmep
 import VisNet
 import torch
 from torch.utils.data import Dataset, DataLoader
+from PIL import Image
 
-dataset = ssf.SSF_reg('/home/feet/Downloads/SSF', 'train', (120, 160))
-dataloader = DataLoader(dataset, 16, True, collate_fn=dataset.collate_fn)
-data, labels = next(iter(dataloader))
-print(labels.size())
+img = Image.open('/home/feet/Downloads/FCS/train/a/foggy-road0.005.png').convert('YCbCr')
+
+print(img.getdata()[0])
