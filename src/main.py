@@ -64,7 +64,7 @@ def train(config, use_cuda):
         if config['model'] != 'RMEP':
             print('YCbCr can only be used with RMEP')
             exit()
-        dataset = ssf_YCbCr.SSF_Reg
+        dataset = ssf_YCbCr.SSF_reg
         model_module.train_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'OTHER':
         dataset = None
