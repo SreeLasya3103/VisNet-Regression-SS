@@ -3,7 +3,6 @@ import tomli
 import sys
 import os
 ROOT_DIR = os.path.dirname(__file__)
-print(ROOT_DIR)
 sys.path.append(os.path.join(ROOT_DIR, 'datasets'))
 import FoggyCityscapesDBF as fcs
 import FROSI as frosi
