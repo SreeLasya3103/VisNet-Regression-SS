@@ -324,3 +324,66 @@ def train_regression(config, use_cuda, dataset):
             (val_r2 == best_val[1] and val_loss < best_val[0])):
             best_val = (val_loss, val_r2)
             model.save('best-r2.pt')
+
+def test_classification(config, use_cuda, dataset):
+    print('Preparing dataset...')
+
+    test_set = None
+    subset = None
+    if config['mode'] == 'VALIDATE':
+        subset = 'val'
+    else:
+        subset = 'test'
+     
+    test_set = dataset(config['dataPath'], subset, config['imgDim'], config['channels'])
+    
+    test_loader = DataLoader(test_set, config['batchSize'], collate_fn=dataset.collate_fn)
+    
+    print('Preparing model...')
+    model = torch.jit.load(config['modelPath']);
+    if use_cuda:
+        model.cuda()
+
+    loss_fn = nn.CrossEntropyLoss()
+
+    if subset == 'val':
+        print('Validating...')
+    else:
+        print('Testing...')
+    correct = 0
+    total = 0
+    running_loss = 0.0
+    
+    with torch.no_grad():
+        model.eval()
+        
+        bar = Bar()
+        bar.max = len(test_loader)
+        for step, (data, labels) in enumerate(test_loader):
+            total += labels.size(0)
+
+            data = data[0]
+
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.cuda()
+
+            output = model(data.float())
+            loss = loss_fn(output, labels)
+            
+            running_loss += loss.item()
+            
+            for i in range(output.size(0)):
+                if output[i].argmax() == labels[i].argmax():
+                    correct = correct + 1
+
+            bar.next()
+    
+    test_loss = running_loss/total
+    test_accuracy = correct/total
+    if subset == 'val':
+        print('\nValidation loss: ' + str(test_loss))
+        print('Validation accuracy: ' + str(test_accuracy))
+    else:
+        print('\nTest loss: ' + str(test_loss))
+        print('Test accuracy: ' + str(test_accuracy))

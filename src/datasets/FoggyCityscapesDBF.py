@@ -81,7 +81,7 @@ class FoggyCityscapesDBF(Dataset):
         pc = None
         fft = None
         
-        orig = Image.open(img_path).convert('RGB')
+        orig = Image.open(img_path).convert('RGB').rotate(90)
         orig = transforms.PILToTensor()(orig)
         orig = resize_crop(orig, self.img_dim) / 255
         
@@ -129,7 +129,7 @@ class FoggyCityscapesDBF(Dataset):
             data = torch.cat((data, (pc.view((1, 1, -1, *self.img_dim)))))
         if fft is not None:
             data = torch.cat((data, (fft.view((1, 1, -1, *self.img_dim)))))
-        
+
         return (data, value)
     
     @staticmethod

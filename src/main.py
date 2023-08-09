@@ -33,10 +33,8 @@ def main():
         
     if config['mode'] == 'TRAIN':
         train(config, use_cuda)
-    elif config['mode'] == 'TEST':
-        print('TESTING')
-    elif config['mode'] == 'VALIDATE':
-        print('VALIDATING')
+    elif config['mode'] == 'TEST' or config['mode'] == 'VALIDATE':
+        test(config, use_cuda)
     else:
         print('No mode specified!')
     
@@ -70,7 +68,35 @@ def train(config, use_cuda):
         dataset = None
         model_module.train_regression(config, use_cuda, dataset)
     
+def test(config, use_cuda):
+    model_module = None
+    
+    if config['model'] == 'VISNET':
+        model_module = VisNet
+    elif config['model'] == 'INTEGRATED':
+        model_module = Integrated
+    elif config['model'] == 'RMEP':
+        model_module = rmep
         
+    dataset = None
+    if config['dataset'] == 'FCS':
+        dataset = fcs.FoggyCityscapesDBF
+        model_module.test_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'FROSI':
+        dataset = frosi.FROSI
+        model_module.test_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'SSF':
+        dataset = ssf.SSF_reg
+        model_module.test_regression(config, use_cuda, dataset)
+    elif config['dataset'] == 'SSF_YCbCr':
+        if config['model'] != 'RMEP':
+            print('YCbCr can only be used with RMEP')
+            exit()
+        dataset = ssf_YCbCr.SSF_reg
+        model_module.test_regression(config, use_cuda, dataset)
+    elif config['dataset'] == 'OTHER':
+        dataset = None
+        model_module.test_regression(config, use_cuda, dataset)
             
     
     
