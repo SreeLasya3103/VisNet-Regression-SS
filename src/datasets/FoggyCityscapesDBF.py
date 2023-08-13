@@ -9,6 +9,8 @@ import math
 import warnings
 warnings.filterwarnings('ignore')
 
+ROTATIONS = False
+
 def resize_crop(img, img_dim):
     target_ratio = img_dim[0] / img_dim[1]
     ratio = img.size(1) / img.size(2)
@@ -69,19 +71,27 @@ class FoggyCityscapesDBF(Dataset):
         self.grayscale_type = grayscale_type
         
     def __len__(self):
-        return len(self.files)
+        if ROTATIONS:
+            return len(self.files) * 4
+        else:
+            return len(self.files)
             
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        img_path = self.files[idx]
+        rotation = 0
+        if ROTATIONS:
+            img_path = self.files[idx/4]
+            rotation = 90 * (idx%4)
+        else:
+            img_path = self.files[idx]
         
         orig = None
         pc = None
         fft = None
         
-        orig = Image.open(img_path).convert('RGB').rotate(90)
+        orig = Image.open(img_path).convert('RGB').rotate(rotation)
         orig = transforms.PILToTensor()(orig)
         orig = resize_crop(orig, self.img_dim) / 255
         
