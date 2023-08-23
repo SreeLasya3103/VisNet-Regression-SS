@@ -56,8 +56,12 @@ def train(config, use_cuda):
         dataset = frosi.FROSI
         model_module.train_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF':
-        dataset = ssf.SSF_reg
-        model_module.train_regression(config, use_cuda, dataset)
+        if config['numClasses'] == 1:
+            dataset = ssf.SSF_reg
+            model_module.train_regression(config, use_cuda, dataset)
+        else:
+            dataset = ssf.SSF_cls
+            model_module.train_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF_YCbCr':
         if config['model'] != 'RMEP':
             print('YCbCr can only be used with RMEP')
@@ -86,8 +90,12 @@ def test(config, use_cuda):
         dataset = frosi.FROSI
         model_module.test_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF':
-        dataset = ssf.SSF_reg
-        model_module.test_regression(config, use_cuda, dataset)
+        if config['numClasses'] == 1:
+            dataset = ssf.SSF_reg
+            model_module.test_regression(config, use_cuda, dataset)
+        else:
+            dataset = ssf.SSF_cls
+            model_module.test_classification(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF_YCbCr':
         if config['model'] != 'RMEP':
             print('YCbCr can only be used with RMEP')

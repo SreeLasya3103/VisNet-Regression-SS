@@ -7,7 +7,7 @@ import torchvision.transforms.functional as vfunc
 from PIL import Image
 from torchvision import transforms
 from matplotlib.colors import LinearSegmentedColormap
-from picamera import PiCamera
+from picamera2 import Picamera2
 from time import sleep
 
 ROOT_DIR = os_path.dirname(__file__)
@@ -50,13 +50,14 @@ img_dim = config['imgDim']
 
 with torch.inference_mode():
     model = torch.jit.load(config['modelPath'], torch.device('cpu'))
-    camera = PiCamera()
+    camera = Picamera2()
+    camera.start()
     sleep(2)
 
     while True:
-        camera.capture('./img.png')
+        camera.capture_file('./img.png')
 
-        orig = Image.open('./img.png').convert('RGB')
+        orig = Image.open('./img.png').convert('RGB').rotate(90)
         orig = transforms.PILToTensor()(orig)
         orig = resize_crop(orig, img_dim) / 255
         pc = None
