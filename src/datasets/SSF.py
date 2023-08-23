@@ -170,7 +170,7 @@ class SSF_cls(Dataset):
             if vis >= i:
                 oneHot = i
         
-        value[oneHot] = 1.0
+        value[0][oneHot] = 1.0
 
         orig = None
         pc = None
