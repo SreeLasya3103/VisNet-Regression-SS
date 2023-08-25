@@ -164,7 +164,7 @@ class SSF_cls(Dataset):
         img_path = self.files[idx]
         dict_key = os.path.basename(img_path)[-19:]
         vis = torch.tensor([[self.labels_dict[dict_key]]])
-        value = torch.tensor([[0,0,0,0,0,0,0,0,0,0,0]])
+        value = torch.tensor([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.]])
         oneHot = 0
         for i in range(0, 11):
             if vis >= i:
