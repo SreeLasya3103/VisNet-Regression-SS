@@ -466,9 +466,9 @@ def test_classification(config, use_cuda, dataset):
                 if output[i].argmax() == labels[i].argmax():
                     correct = correct + 1
                     if config['recordCI']:
-                        ci_right[labels[i].argmax()].append(output[i])
+                        ci_right[labels[i].argmax()].append(nn.Softmax(output[i]))
                 elif config['recordCI']:
-                    ci_wrong[labels[i].argmax()].append(output[i])
+                    ci_wrong[labels[i].argmax()].append(nn.Softmax(output[i]))
 
             bar.next()
     
