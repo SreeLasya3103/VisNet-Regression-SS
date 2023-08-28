@@ -237,7 +237,7 @@ def train_classification(config, use_cuda, dataset):
         total = 0
         running_loss = 0.0
         
-        with torch.inference_mode():
+        with torch.no_grad():
             model.eval()
             
             bar = Bar()
@@ -357,7 +357,7 @@ def train_regression(config, use_cuda, dataset):
         all_labels = torch.empty((0, 1)).cuda()
         running_rmse = 0.0
         
-        with torch.inference_mode():
+        with torch.no_grad():
             model.eval()
             
             bar = Bar()
@@ -436,7 +436,7 @@ def test_classification(config, use_cuda, dataset):
     total = 0
     running_loss = 0.0
     
-    with torch.inference_mode():
+    with torch.no_grad():
         model.eval()
         
         bar = Bar()
