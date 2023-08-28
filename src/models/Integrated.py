@@ -485,13 +485,13 @@ def test_classification(config, use_cuda, dataset):
         for i in range(0, config['numClasses']):
             ci_file = open('ci'+str(i)+'.csv', 'a')
             for j in range(0, max(len(ci_right[i]), len(ci_wrong[i]))):
-                if ci_right[i][j]:
+                if j < len(ci_right[i]):
                     for k in ci_right[i][j]:
                         ci_file.write(str(k) + ',')
                 else:
                     ci_file.write(config['numClasses'] * ',')
                 
-                if ci_wrong[i][j]:
+                if j < len(ci_wrong[i]):
                     for k in ci_wrong[i][j]:
                         ci_file.write(str(k) + ',')
                 ci_file.write('\n')
