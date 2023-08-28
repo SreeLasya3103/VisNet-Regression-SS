@@ -13,3 +13,4 @@ mode = "TRAIN"
 dataset = "FCS"
 model = "RMEP"
 try_cuda = false
+record_ci = true
