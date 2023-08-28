@@ -420,6 +420,15 @@ def test_classification(config, use_cuda, dataset):
     test_set = dataset(config['dataPath'], subset, config['imgDim'], config['channels'], cmap, 'AVERAGE')
     
     test_loader = DataLoader(test_set, config['batchSize'], collate_fn=dataset.collate_fn)
+
+    ci_right = [[] for i in range(config['numClasses'])]
+    ci_wrong = [[] for i in range(config['numClasses'])]
+
+    if config['recordCI']:
+        for i in range(0, config['numClasses']):
+            ci_file = open('ci'+str(i)+'.csv', 'a')
+            ci_file.write('right' + config['numClasses']*','+'wrong')
+            ci_file.close()
     
     print('Preparing model...')
     model = torch.jit.load(config['modelPath']);
@@ -456,6 +465,10 @@ def test_classification(config, use_cuda, dataset):
             for i in range(output.size(0)):
                 if output[i].argmax() == labels[i].argmax():
                     correct = correct + 1
+                    if config['recordCI']:
+                        ci_right[labels[i].argmax()].append(output[i])
+                elif config['recordCI']:
+                    ci_wrong[labels[i].argmax()].append(output[i])
 
             bar.next()
     
@@ -467,3 +480,19 @@ def test_classification(config, use_cuda, dataset):
     else:
         print('\nTest loss: ' + str(test_loss))
         print('Test accuracy: ' + str(test_accuracy))
+
+    if config['recordCI']:
+        for i in range(0, config['numClasses']):
+            ci_file = open('ci'+str(i)+'.csv', 'a')
+            for j in range(0, max(len(ci_right[i]), len(ci_wrong[i]))):
+                if ci_right[i][j]:
+                    for k in ci_right[i][j]:
+                        ci_file.write(str(k) + ',')
+                else:
+                    ci_file.write(config['numClasses'] * ',')
+                
+                if ci_wrong[i][j]:
+                    for k in ci_wrong[i][j]:
+                        ci_file.write(str(k) + ',')
+                ci_file.write('\n')
+            ci_file.close()
