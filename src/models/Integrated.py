@@ -487,12 +487,12 @@ def test_classification(config, use_cuda, dataset):
             for j in range(0, max(len(ci_right[i]), len(ci_wrong[i]))):
                 if j < len(ci_right[i]):
                     for k in ci_right[i][j]:
-                        ci_file.write(str(k.item<float>()) + ',')
+                        ci_file.write(str(k.item()) + ',')
                 else:
                     ci_file.write(config['numClasses'] * ',')
                 
                 if j < len(ci_wrong[i]):
                     for k in ci_wrong[i][j]:
-                        ci_file.write(str(k).item<float>() + ',')
+                        ci_file.write(str(k).item() + ',')
                 ci_file.write('\n')
             ci_file.close()
