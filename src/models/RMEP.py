@@ -234,8 +234,11 @@ def train_regression(config, use_cuda, dataset):
         
         running_loss = 0.0
         total = 0
-        all_outputs = torch.empty((0, 1)).cuda()
-        all_labels = torch.empty((0, 1)).cuda()
+        all_outputs = torch.empty((0, 1))
+        all_labels = torch.empty((0, 1))
+        if use_cuda:
+            all_outputs = all_outputs.cuda()
+            all_labels = all_labels.cuda()
         running_rmse = 0.0
         
         bar = Bar()
