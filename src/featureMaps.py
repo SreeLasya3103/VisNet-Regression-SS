@@ -83,7 +83,8 @@ for i in range(len(model_children)):
 print("Total convolution layers:" + str(counter))
 print("conv_layers")
 
-image = Image.open('./example/3.jpg').convert('RGB')
+exampleImage = input("Select example image (1-3): ")
+image = Image.open('./example/'+exampleImage+'.jpg').convert('RGB')
 image = transforms.PILToTensor()(image)
 image = resize_crop(image, img_dim) / 255
 
@@ -92,7 +93,8 @@ for layer in conv_layers[0:]:
     image = layer(image)
     outputs.append(image)
 
-if True:
+averageChannels = input("Average all channels? (Y/n): ")
+if averageChannels == 'n':
     processed = []
     for feature_map in outputs:
         feature_map = feature_map.squeeze(0)
