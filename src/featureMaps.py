@@ -83,7 +83,7 @@ for i in range(len(model_children)):
 print("Total convolution layers:" + str(counter))
 print("conv_layers")
 
-image = Image.open('./example/8953_20130516_131311.jpg').convert('RGB')
+image = Image.open('./example/3.jpg').convert('RGB')
 image = transforms.PILToTensor()(image)
 image = resize_crop(image, img_dim) / 255
 
@@ -92,16 +92,31 @@ for layer in conv_layers[0:]:
     image = layer(image)
     outputs.append(image)
 
-processed = []
-for feature_map in outputs:
-    feature_map = feature_map.squeeze(0)
-    processed.append(feature_map.data.cpu().numpy())
+if True:
+    processed = []
+    for feature_map in outputs:
+        feature_map = feature_map.squeeze(0)
+        processed.append(feature_map.data.cpu().numpy())
 
-for i in range(len(processed)):
-    print("Convolution " + str(i+1))
-    fig = plt.figure(figsize=(64, 24))
-    for j in range(len(processed[i])):
-        a = fig.add_subplot(12, 24, j+1)
-        imgplot = plt.imshow(processed[i][j])
+    for i in range(len(processed)):
+        print("Convolution " + str(i+1))
+        fig = plt.figure(figsize=(64, 24))
+        for j in range(len(processed[i])):
+            a = fig.add_subplot(12, 24, j+1)
+            imgplot = plt.imshow(processed[i][j])
+            a.axis("off")
+        plt.savefig('./featuremaps/conv'+str(i+1)+'.jpg', bbox_inches='tight')
+else:
+    processed = []
+    for feature_map in outputs:
+        feature_map = feature_map.squeeze(0)
+        gray_scale = torch.sum(feature_map,0)
+        gray_scale = gray_scale / feature_map.shape[0]
+        processed.append(gray_scale.data.cpu().numpy())
+    
+    fig = plt.figure(figsize=(30, 50))
+    for i in range(len(processed)):
+        a = fig.add_subplot(5, 4, i+1)
+        imgplot = plt.imshow(processed[i])
         a.axis("off")
-    plt.savefig('./featuremaps/conv'+str(i+1)+'.jpg', bbox_inches='tight')
+    plt.savefig(str('./featuremaps/feature_maps.jpg'), bbox_inches='tight')
