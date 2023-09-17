@@ -61,6 +61,19 @@ model = torch.jit.load(config['modelPath'], torch.device('cpu'))
 state = model.state_dict()
 model = rmep.RMEP()
 model.load_state_dict(state)
+model.eval();
+
+exampleImage = input("Select example image (1-3): ")
+rotation = input("Rotation in degrees: ")
+if rotation == '':
+    rotation = '0'
+image = Image.open('./example/'+exampleImage+'.jpg').convert('RGB').rotate(int(rotation))
+image = transforms.PILToTensor()(image)
+image = resize_crop(image, img_dim) / 255
+
+data = image.view((1, -1, *img_dim))
+
+print("Visibility (miles): " + str(model(data).item()))
 
 # we will save the conv layer weights in this list
 model_weights =[]
@@ -81,12 +94,6 @@ for i in range(len(model_children)):
                     model_weights.append(child.weight)
                     conv_layers.append(child)
 print("Total convolution layers:" + str(counter))
-print("conv_layers")
-
-exampleImage = input("Select example image (1-3): ")
-image = Image.open('./example/'+exampleImage+'.jpg').convert('RGB')
-image = transforms.PILToTensor()(image)
-image = resize_crop(image, img_dim) / 255
 
 outputs = []
 for layer in conv_layers[0:]:
