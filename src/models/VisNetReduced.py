@@ -12,7 +12,7 @@ import matplotlib
 #****************************
 IMG_SIZE = (112, 112)
 NUM_CLASSES = 3
-NUM_CHANNELS = 1
+NUM_CHANNELS = 3
 
 pc_cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#3F003F', '#7E007E',
                                                                    '#4300BD', '#0300FD', '#003F82',
@@ -105,5 +105,6 @@ def create_and_save():
     net = VisNet()
     net.eval()
     net(torch.rand((3, 1, NUM_CHANNELS, *IMG_SIZE)))
+    #m = torch.jit.script(net)
     m = torch.jit.trace(net, torch.rand((3, 1, NUM_CHANNELS, *IMG_SIZE)))
-    m.save('VisNet_Reduced-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')
+    torch.save(net, 'VisNet_Reduced-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')

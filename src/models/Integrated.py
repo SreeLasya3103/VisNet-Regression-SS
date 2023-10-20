@@ -160,6 +160,7 @@ def create_and_save():
     net = Integrated()
     net.eval()
     net(torch.rand((2, 1, NUM_CHANNELS, *IMG_SIZE)))
+    #m = torch.jit.script(net)
     m = torch.jit.trace(net, torch.rand((2, 1, NUM_CHANNELS, *IMG_SIZE)))
     m.save('Integrated-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')
     

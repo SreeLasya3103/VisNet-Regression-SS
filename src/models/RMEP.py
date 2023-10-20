@@ -9,8 +9,8 @@ import numpy as np
 import torcheval.metrics
 
 
-IMG_SIZE = (256, 256)
-NUM_CLASSES = 3
+IMG_SIZE = (120, 160)
+NUM_CLASSES = 1
 NUM_CHANNELS = 3
 
 class ResNet(nn.Module):
@@ -78,7 +78,8 @@ def create_and_save():
     net = RMEP()
     net.eval()
     net(torch.rand((1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1])))
-    m = torch.jit.trace(net, torch.rand((1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1])))
+    #m = torch.jit.script(net)
+    m = torch.jit.trace(net, torch.rand((1, NUM_CHANNELS, *IMG_SIZE)))
     m.save('RMEP-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')
 
 def train_classification(config, use_cuda, dataset):
@@ -352,7 +353,7 @@ def test_classification(config, use_cuda, dataset):
             ci_file.close()
     
     print('Preparing model...')
-    model = torch.jit.load(config['modelPath']);
+    model = torch.jit.load(config['modelPath'], 'cpu');
     if use_cuda:
         model.cuda()
 

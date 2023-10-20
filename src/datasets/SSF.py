@@ -164,11 +164,64 @@ class SSF_cls(Dataset):
         img_path = self.files[idx]
         dict_key = os.path.basename(img_path)[-19:]
         vis = torch.tensor([[self.labels_dict[dict_key]]])
-        value = torch.tensor([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.]])
+        value = torch.full((1,11), 0.0)
         oneHot = 0
-        for i in range(0, 11):
-            if vis >= i:
-                oneHot = i
+        
+        match vis:
+            case _ if vis < 1.0:
+                oneHot = 0
+            case _ if vis < 2.0:
+                oneHot = 1
+            case _ if vis < 3.0:
+                oneHot = 2
+            case _ if vis < 4.0:
+                oneHot = 3
+            case _ if vis < 5.0:
+                oneHot = 4
+            case _ if vis < 6.0:
+                oneHot = 5
+            case _ if vis < 7.0:
+                oneHot = 6
+            case _ if vis < 8.0:
+                oneHot = 7
+            case _ if vis < 9.0:
+                oneHot = 8
+            case _ if vis < 10.0:
+                oneHot = 9
+            case _ if vis >= 10.0:
+                oneHot = 10
+        
+        # match vis:
+        #     case _ if vis < 0.25:
+        #         oneHot = 0
+        #     case _ if vis < 0.375:
+        #         oneHot = 1
+        #     case _ if vis < 0.625:
+        #         oneHot = 2
+        #     case _ if vis < 0.875:
+        #         oneHot = 3
+        #     case _ if vis < 1.125:
+        #         oneHot = 4
+        #     case _ if vis < 1.375:
+        #         oneHot = 5
+        #     case _ if vis < 1.75:
+        #         oneHot = 6
+        #     case _ if vis < 2.25:
+        #         oneHot = 7
+        #     case _ if vis < 2.75:
+        #         oneHot = 8
+        #     case _ if vis < 3.5:
+        #         oneHot = 9
+        #     case _ if vis < 4.5:
+        #         oneHot = 10
+        #     case _ if vis < 6.0:
+        #         oneHot = 11
+        #     case _ if vis < 8.5:
+        #         oneHot = 12
+        #     case _ if vis <= 10.0:
+        #         oneHot = 13
+        #     case _ if vis > 10.0:
+        #         oneHot = 14
         
         value[0][oneHot] = 1.0
 

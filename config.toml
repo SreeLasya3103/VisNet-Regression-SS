@@ -1,7 +1,7 @@
-modelPath = "./example/trained-integrated-3x160x120.pt"
+modelPath = "/home/feet/Repos/Visibility-Networks/src/models/VisNet_Reduced-3x112x112-3.pt"
 
 # [height, width]
-imgDim = [120, 160]
+imgDim = [112, 112]
 
 # dimensions of FFT mask. [height, width]
 maskDim = [22, 22]
@@ -12,10 +12,10 @@ epochs = 80
 
 learningRate = 0.00001
 
-dataPath = ""
+dataPath = "/home/feet/Downloads/leftImg8bit_trainval_foggyDBF/leftImg8bit_foggyDBF/"
 
 # 1 if doing regression
-numClasses = 1
+numClasses = 3
 
 channels = 3
 
@@ -23,16 +23,16 @@ channels = 3
 classes = ["150m", "300m", "600m"]
 
 # TRAIN, TEST, VALIDATE
-mode = "TRAIN"
+mode = "VALIDATE"
 
 # SSF, FCS, FROSI
-dataset = "SSF"
+dataset = "FCS"
 
 # RMEP, VISNET, INTEGRATED
-model = "INTEGRATED"
+model = "VISNET"
 
 # Use GPU
 try_cuda = false
 
 # Record the confi
-record_ci = false
+recordCI = false
