@@ -3,6 +3,8 @@ from os import path as os_path
 from sys import path as sys_path
 import torch
 import torchvision.transforms.functional as vfunc
+import pandas
+import psutil
 from PIL import Image
 from torchvision import transforms
 from matplotlib.colors import LinearSegmentedColormap
@@ -47,6 +49,17 @@ config = tomli.load(f)
 
 img_dim = config['imgDim']
 
+values_csv = open('values.csv', 'w+')
+values_csv.close()
+
+img_count = 0
+img_count_f = open("imgCount.txt", "w+")
+if os_path.getsize("imgCount.txt") == 0:
+    img_count_f.write(0)
+img_count_f.close()
+
+img_count = int(img_count_f.read())
+
 with torch.inference_mode():
     model = torch.jit.load(config['modelPath'], torch.device('cpu'))
     camera = Picamera2()
@@ -54,9 +67,18 @@ with torch.inference_mode():
     sleep(2)
 
     while True:
-        camera.capture_file('./img.png')
+        img_name = str(img_count) + '.png';
+        camera.capture_file('./' + img_name)
 
-        orig = Image.open('./img.png').convert('RGB').rotate(90)
+        orig = Image.open('./' + img_name).convert('RGB').rotate(90)
+        img_count = img_count + 1
+        if img_count > 1000:
+            img_count = 0
+        
+        img_count_f = open("imgCount.txt", "w")
+        img_count_f.write(img_count)
+        img_count_f.close()
+
         orig = transforms.PILToTensor()(orig)
         orig = resize_crop(orig, img_dim) / 255
         pc = None
@@ -103,5 +125,13 @@ with torch.inference_mode():
             data = data[0]
 
         output = model(data)
-        print(output)
-    
+        #code to display shit
+
+        values_csv = pandas.read_csv("values.csv", header=None)
+        if values_csv.loc[values_csv["file"]==img_name].empty:
+            df = pandas.DataFrame([(img_name, output.value())])
+            values_csv = pandas.concat([values_csv, df], ignore_index=True)
+        else:
+            values_csv.loc[values_csv[0]==img_name, 1] = output.value()
+            
+        values_csv.to_csv("values.csv", header=False, index=False)

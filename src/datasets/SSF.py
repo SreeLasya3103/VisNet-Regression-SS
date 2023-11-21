@@ -40,7 +40,8 @@ def highpass_filter(img, mask_dim):
 
 class SSF_reg(Dataset):
     def __init__(self, dataset_dir, set_type, img_dim, channels=3, cmap=None, grayscale_type='AVERAGE', mask_dim=None):
-        self.files = glob.glob(os.path.join(dataset_dir, set_type) + '/*.jpg')
+        self.files = []
+        tmp_files = glob.glob(os.path.join(dataset_dir, set_type) + '/*.jpg')
         self.img_dim = img_dim
         self.cmap = cmap
         self.mask_dim = mask_dim
@@ -52,6 +53,30 @@ class SSF_reg(Dataset):
             reader = csv.reader(infile)
             next(reader)
             self.labels_dict = {rows[0]:float(rows[7]) for rows in reader}
+
+
+        tmp_files.sort()
+        numpy.random.seed(37)
+        numpy.random.shuffle(tmp_files)
+
+        max_ten_plus = 0
+        if set_type == 'train':
+            max_ten_plus = 250
+        else:
+            max_ten_plus = 100
+
+        ten_plus_count = 0
+    
+        for i in range(len(tmp_files)):
+            img_path = tmp_files[i]
+            dict_key = os.path.basename(img_path)[-19:]
+            vis = torch.tensor([[self.labels_dict[dict_key]]])
+            if vis >= 10.0:
+                if ten_plus_count < max_ten_plus:
+                    self.files.append(img_path)
+                ten_plus_count = ten_plus_count + 1
+            else:
+                self.files.append(img_path)
         
     def __len__(self):
         return len(self.files)
@@ -141,7 +166,8 @@ class SSF_reg(Dataset):
 
 class SSF_cls(Dataset):
     def __init__(self, dataset_dir, set_type, img_dim, channels=3, cmap=None, grayscale_type='AVERAGE', mask_dim=None):
-        self.files = glob.glob(os.path.join(dataset_dir, set_type) + '/*.jpg')
+        self.files = []
+        tmp_files = glob.glob(os.path.join(dataset_dir, set_type) + '/*.jpg')
         self.img_dim = img_dim
         self.cmap = cmap
         self.mask_dim = mask_dim
@@ -153,6 +179,31 @@ class SSF_cls(Dataset):
             reader = csv.reader(infile)
             next(reader)
             self.labels_dict = {rows[0]:float(rows[7]) for rows in reader}
+
+
+        tmp_files.sort()
+        numpy.random.seed(37)
+        numpy.random.shuffle(tmp_files)
+
+        max_ten_plus = 0
+        if set_type == 'train':
+            max_ten_plus = 250
+        else:
+            max_ten_plus = 100
+
+        ten_plus_count = 0
+        for i in range(len(tmp_files)):
+            img_path = tmp_files[i]
+            dict_key = os.path.basename(img_path)[-19:]
+            vis = torch.tensor([[self.labels_dict[dict_key]]])
+            if vis >= 10.0:
+                if ten_plus_count < max_ten_plus:
+                    self.files.append(img_path)
+                ten_plus_count = ten_plus_count + 1
+            else:
+                self.files.append(img_path)
+
+            
         
     def __len__(self):
         return len(self.files)

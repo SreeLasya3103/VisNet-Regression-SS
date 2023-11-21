@@ -109,8 +109,8 @@ def create_and_save():
     net = VisNet()
     net.eval()
     net(torch.rand((3, 1, NUM_CHANNELS, *IMG_SIZE)))
-    #m = torch.jit.script(net)
-    m = torch.jit.trace(net, torch.rand((3, 1, NUM_CHANNELS, *IMG_SIZE)))
+    m = torch.jit.script(net)
+    #m = torch.jit.trace(net, torch.rand((3, 1, NUM_CHANNELS, *IMG_SIZE)))
     m.save('VisNet-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')
 
 def train_classification(config, use_cuda, dataset):
