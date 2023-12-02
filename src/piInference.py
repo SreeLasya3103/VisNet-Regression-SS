@@ -3,13 +3,18 @@ from os import path as os_path
 from sys import path as sys_path
 import torch
 import torchvision.transforms.functional as vfunc
-import pandas
+#import pandas
 import psutil
 from PIL import Image
 from torchvision import transforms
 from matplotlib.colors import LinearSegmentedColormap
 from picamera2 import Picamera2
 from time import sleep
+
+from board import SCL, SDA
+import busio
+from PIL import Image, ImageDraw, ImageFont
+import adafruit_ssd1306
 
 ROOT_DIR = os_path.dirname(__file__)
 sys_path.append(os_path.join(ROOT_DIR, 'models'))
@@ -44,20 +49,30 @@ def highpass_filter(img, mask_dim):
     
     return img
 
+# Create the I2C interface.
+i2c = busio.I2C(SCL, SDA)
+
+# Create the SSD1306 OLED class.
+# The first two parameters are the pixel width and pixel height.  Change these
+# to the right size for your display!
+disp = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
+
+
 f = open('config.toml', 'rb')
 config = tomli.load(f)
 
 img_dim = config['imgDim']
 
-values_csv = open('values.csv', 'w+')
-values_csv.close()
+# values_csv = open('values.csv', 'w+')
+# values_csv.close()
 
 img_count = 0
 img_count_f = open("imgCount.txt", "w+")
 if os_path.getsize("imgCount.txt") == 0:
-    img_count_f.write(0)
+    img_count_f.write(str(0))
 img_count_f.close()
 
+img_count_f = open("imgCount.txt", "r")
 img_count = int(img_count_f.read())
 
 with torch.inference_mode():
@@ -67,16 +82,16 @@ with torch.inference_mode():
     sleep(2)
 
     while True:
-        img_name = str(img_count) + '.png';
-        camera.capture_file('./' + img_name)
+        img_name = str(img_count) + '.jpg';
+        camera.capture_file('./images/' + img_name)
 
-        orig = Image.open('./' + img_name).convert('RGB').rotate(90)
+        orig = Image.open('./images/' + img_name).convert('RGB').rotate(90)
         img_count = img_count + 1
-        if img_count > 1000:
+        if img_count > 10000:
             img_count = 0
         
         img_count_f = open("imgCount.txt", "w")
-        img_count_f.write(img_count)
+        img_count_f.write(str(img_count))
         img_count_f.close()
 
         orig = transforms.PILToTensor()(orig)
@@ -124,14 +139,40 @@ with torch.inference_mode():
         if config['model'] == 'RMEP':
             data = data[0]
 
-        output = model(data)
-        #code to display shit
+        output = model.forward(data)
+        
+        # Clear display.
+        disp.fill(0)
+        disp.show()
+        # Create blank image for drawing.
+        # Make sure to create image with mode '1' for 1-bit color.
+        width = disp.width
+        height = disp.height
+        image = Image.new('1', (width, height))
+        # Get drawing object to draw on image.
+        draw = ImageDraw.Draw(image)
+        # Draw a black filled box to clear the image.
+        draw.rectangle((0, 0, width, height), outline=0, fill=0)
+        # Draw some shapes.
+        # First define some constants to allow easy resizing of shapes.
+        padding = -2
+        top = padding
+        bottom = height-padding
+        # Move left to right keeping track of the current x position for drawing shapes.
+        x = 0
+        # Load default font.
+        font = ImageFont.load_default()
+        draw.text((x, top+0), "{:.2f}".format(output.item()) + " mi", font=font, fill=255, stroke_width=2)
 
-        values_csv = pandas.read_csv("values.csv", header=None)
-        if values_csv.loc[values_csv["file"]==img_name].empty:
-            df = pandas.DataFrame([(img_name, output.value())])
-            values_csv = pandas.concat([values_csv, df], ignore_index=True)
-        else:
-            values_csv.loc[values_csv[0]==img_name, 1] = output.value()
+        # Display image.
+        disp.image(image)
+        disp.show()
+
+        # values_csv = pandas.read_csv("values.csv", header=None)
+        # if values_csv.loc[values_csv["file"]==img_name].empty:
+        #     df = pandas.DataFrame([(img_name, output.item())])
+        #     values_csv = pandas.concat([values_csv, df], ignore_index=True)
+        # else:
+        #     values_csv.loc[values_csv[0]==img_name, 1] = output.item()
             
-        values_csv.to_csv("values.csv", header=False, index=False)
+        # values_csv.to_csv("values.csv", header=False, index=False)
