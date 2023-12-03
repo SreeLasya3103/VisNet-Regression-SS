@@ -47,13 +47,13 @@ class ALL_reg(Dataset):
         self.mask_dim = mask_dim
         self.channels = channels
         self.grayscale_type = grayscale_type
-        self.labels_dict = None
-        tmp_labels_dict = None
+        self.labels_dict = {}
+        tmp_labels_dict = {}
         
         with open(os.path.join(dataset_dir, 'SSF', 'label.csv'), mode='r') as infile:
             reader = csv.reader(infile)
             next(reader)
-            temp_labels_dict = {rows[0]:float(rows[7]) for rows in reader}
+            tmp_labels_dict = {rows[0]:float(rows[7]) for rows in reader}
 
 
         tmp_files.sort()
@@ -81,28 +81,6 @@ class ALL_reg(Dataset):
                 self.files.append(img_path)
                 self.labels_dict[img_path] = vis
         
-        tmp_files = glob.glob(os.path.join(dataset_dir, 'FROSI', set_type) + '/**/*.png', recursive=True)
-        for i in range(len(tmp_files)):
-            img_path = tmp_files[i]
-            self.files.append(img_path)
-            value = None
-            if 'fog_50' in img_path:
-                value = torch.Tensor([[0.031]])
-            elif 'fog_100' in img_path:
-                value = torch.Tensor([[0.062]])
-            elif 'fog_150' in img_path:
-                value = torch.Tensor([[0.093]])
-            elif 'fog_200' in img_path:
-                value = torch.Tensor([[0.124]])
-            elif 'fog_250' in img_path:
-                value = torch.Tensor([[0.155]])
-            elif 'fog_300' in img_path:
-                value = torch.Tensor([[0.186]])
-            elif 'fog_400' in img_path:
-                value = torch.Tensor([[0.249]])
-            
-            self.labels_dict[img_path] = value
-
         tmp_files = glob.glob(os.path.join(dataset_dir, 'FROSI', set_type) + '/**/*.png', recursive=True)
         for i in range(len(tmp_files)):
             img_path = tmp_files[i]
