@@ -1,7 +1,7 @@
-modelPath = "/home/feet/Repos/Visibility-Networks/src/models/VisNet-3x200x200-3-Q.pt"
+modelPath = "/home/feet/Repos/Visibility-Networks/src/models/RMEP-3x320x180-1.pt"
 
 # [height, width]
-imgDim = [200, 200]
+imgDim = [180, 320]
 
 # dimensions of FFT mask. [height, width]
 maskDim = [22, 22]
@@ -12,10 +12,10 @@ epochs = 80
 
 learningRate = 0.00001
 
-dataPath = "/home/feet/datasets/
+dataPath = "/home/feet/datasets/database/images"
 
 # 1 if doing regression
-numClasses = 3
+numClasses = 1
 
 channels = 3
 
@@ -23,13 +23,13 @@ channels = 3
 classes = ["150m", "300m", "600m"]
 
 # TRAIN, TEST, VALIDATE
-mode = "VALIDATE"
+mode = "TRAIN"
 
 # SSF, FCS, FROSI, ALL
-dataset = "FCS"
+dataset = "JACOBS"
 
 # RMEP, VISNET, INTEGRATED
-model = "VISNET"
+model = "RMEP"
 
 # Use GPU
 try_cuda = false
