@@ -13,18 +13,6 @@ IMG_SIZE = (120, 160)
 NUM_CLASSES = 1
 NUM_CHANNELS = 3
 
-#https://gist.github.com/dayyass/6d8f9f85f22a7d8e4179e18f624a652f
-# class GlobalMaxPool2d(nn.Module):
-#     """
-#     Reduce max over last two dimensions.
-#     """
-#     def __init__(self):
-#         super().__init__()
-
-#     def forward(self, x):
-#         x = x.max(dim=-1, keepdim=True)[0]
-#         return x.max(dim=-2, keepdim=True)[0]
-
 class ResNet(nn.Module):
     def __init__(self):
         super(ResNet, self).__init__()
@@ -70,7 +58,7 @@ class RMEP(nn.Module):
                   nn.ReLU(True)]
         
         # model += [nn.AdaptiveMaxPool2d((2,2))]
-        model += [nn.MaxPool2d(16)]
+        model += [nn.MaxPool2d((int(IMG_SIZE[0]/(2**4) + 0.5), int(IMG_SIZE[1]/(2**4) + 0.5)))]
 
         model += [nn.Conv2d(256, 128, 3, 1, 1),
                   nn.InstanceNorm2d(128),
