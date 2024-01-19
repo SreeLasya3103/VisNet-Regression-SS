@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, ceil
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
@@ -58,7 +58,10 @@ class RMEP(nn.Module):
                   nn.ReLU(True)]
         
         # model += [nn.AdaptiveMaxPool2d((2,2))]
-        model += [nn.MaxPool2d((int(IMG_SIZE[0]/(2**4) + 0.5), int(IMG_SIZE[1]/(2**4) + 0.5)))]
+        kernelSize = ( ceil(IMG_SIZE[0]/(2**4)), ceil(IMG_SIZE[1]/(2**4)))
+        stride = ( int(IMG_SIZE[0]/(2**4)), int(IMG_SIZE[1]/(2**4)))
+
+        model += [nn.MaxPool2d(kernelSize, stride)]
 
         model += [nn.Conv2d(256, 128, 3, 1, 1),
                   nn.InstanceNorm2d(128),

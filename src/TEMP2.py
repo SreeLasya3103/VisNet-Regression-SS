@@ -16,7 +16,7 @@ import RMEP as rmep
 import VisNet
 
 with torch.inference_mode():
-    model = torch.jit.load('/home/feet/Desktop/model/trained-rmep-3x160x120.pt', torch.device('cpu'))
+    model = torch.jit.load('/home/feet/Repos/Visibility-Networks/src/models/RMEP-3x160x120-1.pt', torch.device('cpu'))
     model.eval()
 
 state = model.state_dict()

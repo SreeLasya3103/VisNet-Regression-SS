@@ -14,8 +14,9 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP as rmep
 import VisNet
+import onnx
 
-model = torch.load("/home/feet/Repos/Visibility-Networks/src/trained-rmep-3x160x120-NOT-torchscript.pt", torch.device('cpu'))
+model = torch.load('/home/feet/Repos/Visibility-Networks/src/trained-rmep-3x160x120-NOT-torchscript.pt', torch.device('cpu'))
 model.eval()
 
 x = torch.rand((1, 3, 120, 160))
