@@ -10,9 +10,9 @@ import matplotlib
 #****************************
 #*******HEIGHT FIRST*********
 #****************************
-IMG_SIZE = (112, 112)
-NUM_CLASSES = 3
-NUM_CHANNELS = 1
+IMG_SIZE = (120, 160)
+NUM_CLASSES = 1
+NUM_CHANNELS = 3
 
 pc_cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#3F003F', '#7E007E',
                                                                    '#4300BD', '#0300FD', '#003F82',

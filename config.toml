@@ -1,10 +1,10 @@
-modelPath = "/home/feet/Repos/Visibility-Networks/src/models/RMEP-3x320x180-1.pt"
+modelPath = "/home/feet/Desktop/model-testing-with/RMEP/SSF/3x160x120/best-r2.pt"
 
 # [height, width]
-imgDim = [180, 320]
+imgDim = [120, 160]
 
 # dimensions of FFT mask. [height, width]
-maskDim = [22, 22]
+maskDim = [24, 32]
 
 batchSize = 16
 
@@ -12,7 +12,7 @@ epochs = 80
 
 learningRate = 0.00001
 
-dataPath = "/home/feet/datasets/database/images"
+dataPath = "/home/feet/datasets/SSF"
 
 # 1 if doing regression
 numClasses = 1
@@ -23,10 +23,10 @@ channels = 3
 classes = ["150m", "300m", "600m"]
 
 # TRAIN, TEST, VALIDATE
-mode = "TRAIN"
+mode = "VALIDATE"
 
 # SSF, FCS, FROSI, ALL
-dataset = "JACOBS"
+dataset = "SSF"
 
 # RMEP, VISNET, INTEGRATED
 model = "RMEP"

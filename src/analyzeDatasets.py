@@ -16,7 +16,7 @@ dataset = ssf.SSF_cls
 cmap = matplotlib.colormaps['Greys']
 classes = {}
 
-train_set = dataset('/home/feet/Downloads/SSF/', 'val', (1,1), 3, cmap, 'BLUE', (0,0))
+train_set = dataset('/home/feet/datasets/SSF/', 'train', (1,1), 3, cmap, 'BLUE', (0,0))
 train_loader = DataLoader(train_set, 1, False, collate_fn=dataset.collate_fn)
 for step, (_, labels) in enumerate(train_loader):
     label = labels[0].argmax().item()

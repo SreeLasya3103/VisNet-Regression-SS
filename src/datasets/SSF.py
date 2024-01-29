@@ -61,9 +61,11 @@ class SSF_reg(Dataset):
 
         max_ten_plus = 0
         if set_type == 'train':
-            max_ten_plus = 999999
+            max_ten_plus = 99999999
+            #max_ten_plus = 250
         else:
-            max_ten_plus = 999999
+            max_ten_plus = 99999999
+            #max_ten_plus = 100
 
         ten_plus_count = 0
     
@@ -187,9 +189,9 @@ class SSF_cls(Dataset):
 
         max_ten_plus = 0
         if set_type == 'train':
-            max_ten_plus = 250
+            max_ten_plus = 999999
         else:
-            max_ten_plus = 100
+            max_ten_plus = 999999
 
         ten_plus_count = 0
         for i in range(len(tmp_files)):

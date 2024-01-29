@@ -7,7 +7,8 @@ import copy
 from progress.bar import Bar
 import numpy as np
 import torcheval.metrics
-
+import torchvision
+from PIL import Image
 
 IMG_SIZE = (120, 160)
 NUM_CLASSES = 1
@@ -57,11 +58,11 @@ class RMEP(nn.Module):
                   nn.InstanceNorm2d(256),
                   nn.ReLU(True)]
         
-        # model += [nn.AdaptiveMaxPool2d((2,2))]
-        kernelSize = ( ceil(IMG_SIZE[0]/(2**4)), ceil(IMG_SIZE[1]/(2**4)))
-        stride = ( int(IMG_SIZE[0]/(2**4)), int(IMG_SIZE[1]/(2**4)))
+        model += [nn.AdaptiveMaxPool2d((2,2))]
+        # kernelSize = ( ceil(IMG_SIZE[0]/(2**4)), ceil(IMG_SIZE[1]/(2**4)))
+        # stride = ( int(IMG_SIZE[0]/(2**4)), int(IMG_SIZE[1]/(2**4)))
 
-        model += [nn.MaxPool2d(kernelSize, stride)]
+        # model += [nn.MaxPool2d(kernelSize, stride)]
 
         model += [nn.Conv2d(256, 128, 3, 1, 1),
                   nn.InstanceNorm2d(128),
@@ -219,7 +220,7 @@ def train_regression(config, use_cuda, dataset):
         model.cuda()
     
     loss_fn = nn.SmoothL1Loss()
-    optimizer = torch.optim.Adam(model.parameters(), 0.0002)
+    optimizer = torch.optim.Adam(model.parameters(), config['learningRate'])
     
     metrics_file = open('results.csv', 'a')
     metrics_file.write('training MAE,training R2,training RMSE,validation MAE,validation R2,validation RMSE\n')
@@ -228,9 +229,9 @@ def train_regression(config, use_cuda, dataset):
     best_val = (0.0, 0.0)
     
     for epoch in range(config['epochs']):
-        if epoch > 50:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.0002 * ((150 - epoch + 50) / 150)
+        # if epoch > 50:
+        #     for param_group in optimizer.param_groups:
+        #         param_group['lr'] = 0.0002 * ((150 - epoch + 50) / 150)
                 
         print('\nEpoch ' + str(epoch+1))
         print('Training...')
@@ -427,3 +428,70 @@ def test_classification(config, use_cuda, dataset):
                         ci_file.write(str(k.item()) + ',')
                 ci_file.write('\n')
             ci_file.close()
+
+def test_regression(config, use_cuda, dataset):
+    print('Preparing dataset...')
+
+    test_set = None
+    subset = None
+    if config['mode'] == 'VALIDATE':
+        subset = 'val'
+    else:
+        subset = 'test'
+     
+    test_set = dataset(config['dataPath'], subset, config['imgDim'], config['channels'])
+    
+    test_loader = DataLoader(test_set, config['batchSize'], collate_fn=dataset.collate_fn)
+    
+    print('Preparing model...')
+    model = torch.jit.load(config['modelPath'], torch.device('cpu'));
+    if use_cuda:
+        model.cuda()
+    
+    loss_fn = nn.SmoothL1Loss()
+
+    running_loss = 0.0
+    total = 0
+    all_outputs = torch.empty((0, 1))
+    all_labels = torch.empty((0, 1))
+    if use_cuda:
+        all_outputs = all_outputs.cuda()
+        all_labels = all_labels.cuda()
+    running_rmse = 0.0
+    
+    with torch.no_grad():
+        model.eval()
+        
+        bar = Bar()
+        bar.max = len(test_loader)
+        for step, (data, labels) in enumerate(test_loader):
+            total += labels.size(0)
+
+            data = data[0]
+
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.cuda()
+
+            output = model(data.float())
+            all_outputs = torch.cat((all_outputs, output))
+            all_labels = torch.cat((all_labels, labels))
+            loss = loss_fn(output, labels)
+            
+            running_loss += loss.item()
+            running_rmse += sqrt(nn.MSELoss()(output, labels).item())
+
+            bar.next()
+    
+    test_loss = running_loss/total
+    test_r2 = torcheval.metrics.functional.r2_score(all_outputs, all_labels).item()
+    test_rmse = running_rmse/total
+    if subset == 'val':
+        print('\nValidation MAE: ' + str(test_loss))
+        print('Validation R2: ' + str(test_r2))
+        print('Validation RMSE: ' + str(test_rmse))
+    else:
+        print('\nTest MAE: ' + str(test_loss))
+        print('Test R2: ' + str(test_r2))
+        print('Test RMSE: ' + str(test_rmse))
+        
