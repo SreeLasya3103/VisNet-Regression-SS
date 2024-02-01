@@ -1,4 +1,4 @@
-modelPath = "/home/feet/Desktop/model-testing-with/RMEP/SSF/3x160x120/best-r2.pt"
+modelPath = "/home/feet/Desktop/model-testing-with/Quantized/SSF/VISNET-R-SSF-3x160x120-1-Q.pt"
 
 # [height, width]
 imgDim = [120, 160]
@@ -29,7 +29,7 @@ mode = "VALIDATE"
 dataset = "SSF"
 
 # RMEP, VISNET, INTEGRATED
-model = "RMEP"
+model = "VISNET"
 
 # Use GPU
 try_cuda = false

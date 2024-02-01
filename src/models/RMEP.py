@@ -10,8 +10,8 @@ import torcheval.metrics
 import torchvision
 from PIL import Image
 
-IMG_SIZE = (120, 160)
-NUM_CLASSES = 1
+IMG_SIZE = (256, 256)
+NUM_CLASSES = 3
 NUM_CHANNELS = 3
 
 class ResNet(nn.Module):
@@ -58,11 +58,11 @@ class RMEP(nn.Module):
                   nn.InstanceNorm2d(256),
                   nn.ReLU(True)]
         
-        model += [nn.AdaptiveMaxPool2d((2,2))]
-        # kernelSize = ( ceil(IMG_SIZE[0]/(2**4)), ceil(IMG_SIZE[1]/(2**4)))
-        # stride = ( int(IMG_SIZE[0]/(2**4)), int(IMG_SIZE[1]/(2**4)))
+        # model += [nn.AdaptiveMaxPool2d((2,2))]
+        kernelSize = ( ceil(IMG_SIZE[0]/(2**4)), ceil(IMG_SIZE[1]/(2**4)))
+        stride = ( int(IMG_SIZE[0]/(2**4)), int(IMG_SIZE[1]/(2**4)))
 
-        # model += [nn.MaxPool2d(kernelSize, stride)]
+        model += [nn.MaxPool2d(kernelSize, stride)]
 
         model += [nn.Conv2d(256, 128, 3, 1, 1),
                   nn.InstanceNorm2d(128),
@@ -83,7 +83,12 @@ def create_and_save():
     net = RMEP()
     net.eval()
     net(torch.rand((1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1])))
+
     m = torch.jit.script(net)
+
+    for param in m.parameters():
+        param.grad = None
+
     #m = torch.jit.trace(net, torch.rand((1, NUM_CHANNELS, *IMG_SIZE)))
     m.save('RMEP-' + str(NUM_CHANNELS) + 'x' + str(IMG_SIZE[1]) + 'x' + str(IMG_SIZE[0]) + '-' + str(NUM_CLASSES) + '.pt')
 

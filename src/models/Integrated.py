@@ -570,4 +570,3 @@ def test_regression(config, use_cuda, dataset):
         print('\nTest MAE: ' + str(test_loss))
         print('Test R2: ' + str(test_r2))
         print('Test RMSE: ' + str(test_rmse))
-#shit

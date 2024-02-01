@@ -494,7 +494,7 @@ def test_regression(config, use_cuda, dataset):
 
         for step, (data, labels) in enumerate(test_loader):
             total += labels.size(0)
-            data = data[0]
+            #data = data[0]
 
             if use_cuda:
                 data = data.cuda()
@@ -521,4 +521,3 @@ def test_regression(config, use_cuda, dataset):
         print('\nTest MAE: ' + str(test_loss))
         print('Test R2: ' + str(test_r2))
         print('Test RMSE: ' + str(test_rmse))
-#shit
