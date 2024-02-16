@@ -16,14 +16,14 @@ import RMEP as rmep
 import VisNet
 import VisNetReduced
 
-IMG_SIZE = (120, 160)
-NUM_CLASSES = 1
+IMG_SIZE = (256, 256)
+NUM_CLASSES = 3
 NUM_CHANNELS = 3
 
 with torch.inference_mode():
    sample = torch.rand((1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1]))
 
-   model = torch.jit.load('/home/feet/Desktop/model-testing-with/RMEP/SSF/3x160x120/best-r2.pt', map_location=torch.device('cpu'))
+   model = torch.jit.load('/home/feet/Desktop/model-testing-with/RMEP/FCS/3x256x256/best-acc.pt', map_location=torch.device('cpu'))
 
    state = model.state_dict()
 
@@ -35,4 +35,4 @@ with torch.inference_mode():
    model, qconfig_spec={torch.nn.Linear}, dtype=torch.qint8)
 
    model_dynamic_quantized = torch.jit.script(model_dynamic_quantized)
-   model_dynamic_quantized.save('RMEP-SSF-3x160x120-1-Q.pt')
+   model_dynamic_quantized.save('RMEP-FCS-3x256x256-3-Q.pt')

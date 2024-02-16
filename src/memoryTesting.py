@@ -1,12 +1,12 @@
 import torch
 
 NUM_CHANNELS = 3
-IMG_SIZE = (200, 200)
+IMG_SIZE = (120, 160)
 
 def main():
     with torch.inference_mode():
-        data = torch.rand((3, 1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1]))
-        model = torch.jit.load('/home/feet/Desktop/model-testing-with/VisNet/FCS/3x200x200/best-acc.pt', 'cpu')
+        data = torch.rand((2, 1, NUM_CHANNELS, IMG_SIZE[0], IMG_SIZE[1]))
+        model = torch.jit.load('/home/feet/Desktop/model-testing-with/Integrated/SSF/balanced/3x160x120/best-r2.pt', 'cpu')
         model.forward(data)
 
 main()
