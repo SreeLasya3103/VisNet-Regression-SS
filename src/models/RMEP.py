@@ -499,4 +499,11 @@ def test_regression(config, use_cuda, dataset):
         print('\nTest MAE: ' + str(test_loss))
         print('Test R2: ' + str(test_r2))
         print('Test RMSE: ' + str(test_rmse))
+    
+    if config["record_values"]:
+        ovt = open("ObservedTruth.csv", "w")
+        ovt.write("ObservedValue,TrueValue\n")
+        for i in range(total):
+            ovt.write(str(all_outputs[i].item()) + "," + str(all_labels[i].item()) + "\n")
+        ovt.close()
         

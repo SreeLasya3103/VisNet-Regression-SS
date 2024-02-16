@@ -1,7 +1,7 @@
-modelPath = "/home/feet/Desktop/model-testing-with/Quantized/FCS/RMEP-FCS-3x256x256-3-Q.pt"
+modelPath = "/home/feet/Desktop/model-testing-with/RMEP/SSF/balanced/3x160x120/best-r2.pt"
 
 # [height, width]
-imgDim = [256, 256]
+imgDim = [120, 160]
 
 # dimensions of FFT mask. [height, width]
 maskDim = [24, 32]
@@ -12,10 +12,10 @@ epochs = 80
 
 learningRate = 0.00001
 
-dataPath = "/home/feet/datasets/FCS/leftImg8bit_foggyDBF/"
+dataPath = "/home/feet/datasets/SSF"
 
 # 1 if doing regression
-numClasses = 3
+numClasses = 1
 
 channels = 3
 
@@ -25,8 +25,10 @@ classes = ["150m", "300m", "600m"]
 # TRAIN, TEST, VALIDATE
 mode = "VALIDATE"
 
+record_values = true
+
 # SSF, FCS, FROSI, ALL
-dataset = "FCS"
+dataset = "SSF"
 
 # RMEP, VISNET, INTEGRATED
 model = "RMEP"
