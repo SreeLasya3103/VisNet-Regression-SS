@@ -61,11 +61,11 @@ class SSF_reg(Dataset):
 
         max_ten_plus = 0
         if set_type == 'train':
-            # max_ten_plus = 99999999
-            max_ten_plus = 250
+            max_ten_plus = 99999999
+            # max_ten_plus = 250
         else:
-            # max_ten_plus = 99999999
-            max_ten_plus = 100
+            max_ten_plus = 99999999
+            # max_ten_plus = 100
 
         ten_plus_count = 0
     
@@ -76,6 +76,7 @@ class SSF_reg(Dataset):
             if vis >= 10.0:
                 if ten_plus_count < max_ten_plus:
                     self.files.append(img_path)
+                # self.labels_dict[dict_key] = 10.0
                 ten_plus_count = ten_plus_count + 1
             else:
                 self.files.append(img_path)

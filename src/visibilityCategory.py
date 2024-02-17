@@ -6,10 +6,10 @@ def loadCSV(filename):
 
     for x in df.index:
         if df.at[x, 'TrueValue'] > 10:
-            df.at[x, 'TrueValue'] = 10
+            df.at[x, 'TrueValue'] = 10.0
 
         if df.at[x, 'ObservedValue'] > 10:
-            df.at[x, 'ObservedValue'] = 10
+            df.at[x, 'ObservedValue'] = 10.0
 
     return df
 

@@ -1,4 +1,4 @@
-modelPath = "/home/feet/Desktop/model-testing-with/RMEP/SSF/balanced/3x160x120/best-r2.pt"
+modelPath = "/home/feet/Desktop/model-testing-with/RMEP/SSF/3x160x120/best-r2.pt"
 
 # [height, width]
 imgDim = [120, 160]

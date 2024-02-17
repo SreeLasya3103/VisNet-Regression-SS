@@ -148,7 +148,7 @@ def train_classification(config, use_cuda, dataset):
             
             optimizer.step()
             
-            running_loss += loss.item()
+            running_loss += output.size(0) * loss.item()
             
             for i in range(output.size(0)):
                 if output[i].argmax() == labels[i].argmax():

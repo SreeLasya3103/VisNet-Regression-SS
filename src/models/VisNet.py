@@ -128,7 +128,7 @@ def train_classification(config, use_cuda, dataset):
     val_loader = DataLoader(val_set, config['batchSize'], collate_fn=dataset.collate_fn)
     
     print('Preparing model...')
-    model = torch.jit.load(config['modelPath']);
+    model = torch.jit.load(config['modelPath'], 'cpu')
     if use_cuda:
         model.cuda()
     
@@ -244,7 +244,7 @@ def train_regression(config, use_cuda, dataset):
     val_loader = DataLoader(val_set, config['batchSize'], collate_fn=dataset.collate_fn)
     
     print('Preparing model...')
-    model = torch.jit.load(config['modelPath']);
+    model = torch.jit.load(config['modelPath'], 'cpu')
     if use_cuda:
         model.cuda()
     
@@ -469,7 +469,7 @@ def test_regression(config, use_cuda, dataset):
     test_loader = DataLoader(test_set, config['batchSize'], collate_fn=dataset.collate_fn)
     
     print('Preparing model...')
-    model = torch.jit.load(config['modelPath']);
+    model = torch.jit.load(config['modelPath'], 'cpu');
     if use_cuda:
         model.cuda()
     
