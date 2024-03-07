@@ -10,8 +10,8 @@ import torcheval.metrics
 import torchvision
 from PIL import Image
 
-IMG_SIZE = (256, 256)
-NUM_CLASSES = 3
+IMG_SIZE = (180, 320)
+NUM_CLASSES = 1
 NUM_CHANNELS = 3
 
 class ResNet(nn.Module):
@@ -183,7 +183,7 @@ def train_classification(config, use_cuda, dataset):
                 output = model(data.float())
                 loss = loss_fn(output, labels)
                 
-                running_loss += loss.item()
+                running_loss += loss.item() * labels.size(0)
                 
                 for i in range(output.size(0)):
                     if output[i].argmax() == labels[i].argmax():
@@ -223,6 +223,9 @@ def train_regression(config, use_cuda, dataset):
     model = torch.jit.load(config['modelPath']);
     if use_cuda:
         model.cuda()
+    model.train()
+        
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
     loss_fn = nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(model.parameters(), config['learningRate'])
@@ -273,8 +276,8 @@ def train_regression(config, use_cuda, dataset):
             
             optimizer.step()
             
-            running_loss += loss.item()
-            running_rmse += sqrt(nn.MSELoss()(output, labels).item())
+            running_loss += loss.item() * labels.size(0)
+            running_rmse += sqrt(nn.MSELoss()(output, labels).item()) * labels.size(0)
 
             bar.next()
         
@@ -314,8 +317,8 @@ def train_regression(config, use_cuda, dataset):
                 all_labels = torch.cat((all_labels, labels))
                 loss = loss_fn(output, labels)
                 
-                running_loss += loss.item()
-                running_rmse += sqrt(nn.MSELoss()(output, labels).item())
+                running_loss += loss.item() * labels.size(0)
+                running_rmse += sqrt(nn.MSELoss()(output, labels).item()) * labels.size(0)
 
                 bar.next()
         
@@ -397,7 +400,7 @@ def test_classification(config, use_cuda, dataset):
             output = model(data.float())
             loss = loss_fn(output, labels)
             
-            running_loss += loss.item()
+            running_loss += loss.item() * labels.size(0)
             
             for i in range(output.size(0)):
                 if output[i].argmax() == labels[i].argmax():
@@ -452,6 +455,9 @@ def test_regression(config, use_cuda, dataset):
     model = torch.jit.load(config['modelPath'], torch.device('cpu'));
     if use_cuda:
         model.cuda()
+    model.train()
+        
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
     loss_fn = nn.SmoothL1Loss()
 
@@ -483,8 +489,8 @@ def test_regression(config, use_cuda, dataset):
             all_labels = torch.cat((all_labels, labels))
             loss = loss_fn(output, labels)
             
-            running_loss += loss.item()
-            running_rmse += sqrt(nn.MSELoss()(output, labels).item())
+            running_loss += loss.item() * labels.size(0)
+            running_rmse += sqrt(nn.MSELoss()(output, labels).item()) * labels.size(0)
 
             bar.next()
     

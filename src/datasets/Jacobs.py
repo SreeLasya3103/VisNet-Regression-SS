@@ -9,7 +9,7 @@ import csv
 import glob
 import sqlite3
 
-DATABASE_PATH = '/home/feet/datasets/database/fog_v1.db'
+DATABASE_PATH = '/home/jmurr/Downloads/database/images/fog_v1.db'
 
 def resize_crop(img, img_dim):
     target_ratio = img_dim[0] / img_dim[1]
