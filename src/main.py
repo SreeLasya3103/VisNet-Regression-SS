@@ -10,6 +10,7 @@ import SSF as ssf
 import SSF_YCbCr as ssf_YCbCr
 import AllSets
 import Jacobs
+import Webcams
 sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP as rmep
@@ -64,6 +65,9 @@ def train(config, use_cuda):
         else:
             dataset = ssf.SSF_cls
             model_module.train_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'WEBCAMS':
+        dataset = Webcams.Webcams
+        model_module.train_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF_YCbCr':
         if config['model'] != 'RMEP':
             print('YCbCr can only be used with RMEP')
@@ -106,6 +110,9 @@ def test(config, use_cuda):
         else:
             dataset = ssf.SSF_cls
             model_module.test_classification(config, use_cuda, dataset)
+    elif config['dataset'] == 'WEBCAMS':
+        dataset = Webcams.Webcams
+        model_module.test_regression(config, use_cuda, dataset)
     elif config['dataset'] == 'SSF_YCbCr':
         if config['model'] != 'RMEP':
             print('YCbCr can only be used with RMEP')

@@ -1,18 +1,18 @@
-modelPath = "/home/jmurr/Repos/Visibility-Networks/RMEP-3x320x180-1.pt"
+modelPath = "/home/jmurr/Repos/Visibility-Networks/VisNet_Reduced-3x476x357-1.pt"
 
 # [height, width]
-imgDim = [180, 320]
+imgDim = [357, 476]
 
 # dimensions of FFT mask. [height, width]
-maskDim = [24, 32]
+maskDim = [71, 95]
 
-batchSize = 16
+batchSize = 6
 
 epochs = 80
 
-learningRate = 0.00001
+learningRate = 0.00005
 
-dataPath = "/home/jmurr/Downloads/database/images"
+dataPath = "/home/jmurr/Documents/LAWN/datasets/4-9-24-5-23-PM/images"
 
 # 1 if doing regression
 numClasses = 1
@@ -28,10 +28,10 @@ mode = "TRAIN"
 record_values = false
 
 # SSF, FCS, FROSI, ALL
-dataset = "JACOBS"
+dataset = "WEBCAMS"
 
 # RMEP, VISNET, INTEGRATED
-model = "RMEP"
+model = "VISNET"
 
 # Use GPU
 try_cuda = false

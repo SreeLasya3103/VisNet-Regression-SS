@@ -2,15 +2,15 @@ import glob
 import random
 import os
 
-files = glob.glob('/home/jmurr/Downloads/database/images/*.png')
+files = glob.glob('/home/jmurr/Documents/LAWN/datasets/CombinedWebcams/*.png')
 random.shuffle(files)
 random.shuffle(files)
 random.shuffle(files)
-train = files[:480]
-val = files[480:]
+train = files[:1054]
+val = files[1054:]
 
 for img in train:
-    os.replace(img, '/home/jmurr/Downloads/database/images/train/' + os.path.basename(img))
+    os.replace(img, '/home/jmurr/Documents/LAWN/datasets/CombinedWebcams/train/' + os.path.basename(img))
 
 for img in val:
-    os.replace(img, '/home/jmurr/Downloads/database/images/val/' + os.path.basename(img))
+    os.replace(img, '/home/jmurr/Documents/LAWN/datasets/CombinedWebcams/val/' + os.path.basename(img))
