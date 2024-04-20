@@ -15,6 +15,7 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 import Integrated
 import RMEP as rmep
 import VisNet
+import Minimum
     
 def main():
     f = open('config.toml', 'rb')
@@ -50,6 +51,8 @@ def train(config, use_cuda):
         model_module = Integrated
     elif config['model'] == 'RMEP':
         model_module = rmep
+    elif config['model'] == 'MINIM':
+        model_module = Minimum
         
     dataset = None
     if config['dataset'] == 'FCS':
@@ -95,6 +98,8 @@ def test(config, use_cuda):
         model_module = Integrated
     elif config['model'] == 'RMEP':
         model_module = rmep
+    elif config['model'] == 'MINIM':
+        model_module = Minimum
         
     dataset = None
     if config['dataset'] == 'FCS':

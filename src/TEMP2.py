@@ -6,8 +6,8 @@ files = glob.glob('/home/jmurr/Documents/LAWN/datasets/CombinedWebcams/*.png')
 random.shuffle(files)
 random.shuffle(files)
 random.shuffle(files)
-train = files[:1054]
-val = files[1054:]
+train = files[:1502]
+val = files[1502:]
 
 for img in train:
     os.replace(img, '/home/jmurr/Documents/LAWN/datasets/CombinedWebcams/train/' + os.path.basename(img))
