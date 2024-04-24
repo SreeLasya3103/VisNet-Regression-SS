@@ -23,6 +23,7 @@ class Minim(nn.Module):
                  nn.InstanceNorm2d(16),
                  nn.ReLU(True)]
         
+        model += nn.MaxPool2d((2,2))
         
         model += [nn.Flatten(), nn.LazyLinear(NUM_CLASSES)]
 
@@ -68,10 +69,6 @@ def train_classification(config, use_cuda, dataset):
     best_val = (0.0, 0.0)
     
     for epoch in range(config['epochs']):
-        if epoch > 50:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.0002 * ((150 - epoch + 50) / 150)
-        
         print('\nEpoch ' + str(epoch+1))
         print('Training...')
         
