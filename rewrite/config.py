@@ -5,22 +5,22 @@ import models
 
 CONFIG = {
     'model module': models.VisNet,
-    'dimensions': (120,160),
+    'dimensions': (460,300),
     'classes': 1,
     'channels': 3,
-    'split': 0.75, 
-    'batch size': 32,
+    'split': 0.75,
+    'batch size': 16,
     'cuda': True,
     'loss function': nn.SmoothL1Loss(),
     'optimizer': torch.optim.Adam,
     'optim params': {
-      'lr': 0.00001,  
+      'lr': 0.00001,
     },
     'scheduler': None,
     'scheduler params': {
-    
+
     },
     'epochs': 80,
-    'dataset': datasets.SSF.SSF_reg,
-    'dataset path': '/home/feet/Documents/LAWN/datasets/SSF'
+    'dataset': datasets.Webcams.Webcams_reg,
+    'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams'
 }

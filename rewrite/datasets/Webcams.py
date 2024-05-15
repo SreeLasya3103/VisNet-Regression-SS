@@ -21,9 +21,10 @@ class Webcams_reg(Dataset):
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
         #Remove 47 top, 3 bottom, 3 sides
-        dims = (data.size(1)-50, data.size[2]-6)
+        dims = (data.size(1)-50, data.size(2)-6)
         data = f.crop(data, 46, 2, dims[0], dims[1])
         data = self.transform(data)
+        data = data.float()
         
         string_value = path.basename(img_path)
         string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')

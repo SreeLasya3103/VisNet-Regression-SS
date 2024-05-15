@@ -25,6 +25,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         'dataset': train_set.__class__.__name__,
         'train split': params['split'],
         'loss function': loss_fn.__class__.__name__,
+        'learning rate': learning_rate,
         'optimizer': optimizer.__class__.__name__,
         'scheduler': scheduler.__class__.__name__,
         'batch size': batch_size,
@@ -53,13 +54,13 @@ def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         total = 0
         running_loss = 0.0
         
-        current_lr = 0.0
-        if scheduler:
-            current_lr = scheduler.get_lr()
-        else:
-            current_lr = learning_rate
+        # current_lr = 0.0
+        # if scheduler:
+        #     current_lr = scheduler.get_lr()
+        # else:
+        #     current_lr = learning_rate
         
-        writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
+        # writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
         
         for step, (data, labels) in enumerate(train_loader):
             if use_cuda:
@@ -204,6 +205,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         'dataset': train_set.__class__.__name__,
         'train split': params['split'],
         'loss function': loss_fn.__class__.__name__,
+        'learning rate': learning_rate,
         'optimizer': optimizer.__class__.__name__,
         'scheduler': scheduler.__class__.__name__,
         'batch size': batch_size,
@@ -234,13 +236,13 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         running_mse = 0.0
         running_r2 = 0.0
         
-        current_lr = 0.0
-        if scheduler:
-            current_lr = scheduler.get_lr()
-        else:
-            current_lr = learning_rate
+        # current_lr = 0.0
+        # if scheduler:
+        #     current_lr = scheduler.get_lr()
+        # else:
+        #     current_lr = learning_rate
         
-        writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
+        # writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
         
         for step, (data, labels) in enumerate(train_loader):
             if use_cuda:
