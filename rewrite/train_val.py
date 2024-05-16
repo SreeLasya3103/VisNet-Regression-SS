@@ -40,7 +40,9 @@ def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
     
     if use_cuda:
         model.cuda()
-        
+    
+    best_loss = float('-inf')
+    
     for epoch in range(epochs):
         print('\nEpoch ' + str(epoch+1))
         print('Training...')
@@ -99,6 +101,12 @@ def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         writer.add_scalar('Loss/val', val_loss, epoch+1)
         writer.add_scalar('Acc/val', val_accuracy, epoch+1)
         writer.flush()
+        
+        torch.save(model.state_dict(), 'last.pt')
+        
+        if val_loss > best_loss:
+            best_loss = val_loss
+            torch.save(model.state_dict(), 'best-loss.pt')
         
         if scheduler:
             scheduler.step()
@@ -221,6 +229,8 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
     if use_cuda:
         model.cuda()
         
+    best_r2 = float('-inf')
+        
     for epoch in range(epochs):
         print('\nEpoch ' + str(epoch+1))
         print('Training...')
@@ -234,7 +244,12 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         running_loss = 0.0
         running_mae = 0.0
         running_mse = 0.0
-        running_r2 = 0.0
+        
+        all_outputs = torch.empty((0, 1))
+        all_labels = torch.empty((0, 1))
+        if use_cuda:
+            all_outputs = all_outputs.cuda()
+            all_labels = all_labels.cuda()
         
         # current_lr = 0.0
         # if scheduler:
@@ -260,16 +275,18 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
             
             optimizer.step()
             
+            all_outputs = torch.cat((all_outputs, output))
+            all_labels = torch.cat((all_labels, labels))
+            
             running_mae += f.l1_loss(output, labels, reduction='sum').item()
             running_mse += f.mse_loss(output, labels, reduction='sum').item()
-            running_r2 += r2_score(output, labels).item() * labels.size(0)
             
             bar.next()
         
         train_loss = running_loss/total
         train_mae = running_mae/total
         train_rmse = math.sqrt(running_mse/total)
-        train_r2 = running_r2/total
+        train_r2 = r2_score(all_outputs, all_labels).item()
         print('\nTraining loss: ' + str(train_loss))
         print('Training MAE : ' + str(train_mae))
         print('Training RMSE: ' + str(train_rmse))
@@ -291,6 +308,12 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         writer.add_scalar('RMSE/val', val_rmse, epoch+1)
         writer.add_scalar('R2/val', val_r2, epoch+1)
         writer.flush()
+        
+        torch.save(model.state_dict(), 'last.pt')
+        
+        if val_r2 > best_r2:
+            best_r2 = val_r2
+            torch.save(model.state_dict(), 'best-r2.pt')
         
         if scheduler:
             scheduler.step()
@@ -315,7 +338,12 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
         running_loss = 0.0
         running_mae = 0.0
         running_mse = 0.0
-        running_r2 = 0.0
+        
+        all_outputs = torch.empty((0, 1))
+        all_labels = torch.empty((0, 1))
+        if use_cuda:
+            all_outputs = all_outputs.cuda()
+            all_labels = all_labels.cuda()
         
         for step, (data, labels) in enumerate(val_loader):
             if use_cuda:
@@ -327,16 +355,18 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
             output = model(data)
             loss = loss_fn(output, labels)
             running_loss += output.size(0) * loss.item()
+            
+            all_outputs = torch.cat((all_outputs, output))
+            all_labels = torch.cat((all_labels, labels))
 
             running_mae += f.l1_loss(output, labels, reduction='sum').item()
             running_mse += f.mse_loss(output, labels, reduction='sum').item()
-            running_r2 += r2_score(output, labels).item() * labels.size(0)
             
             bar.next()
         
         val_loss = running_loss/total
         val_mae = running_mae/total
         val_rmse = math.sqrt(running_mse/total)
-        val_r2 = running_r2/total
+        val_r2 = r2_score(all_outputs, all_labels).item()
         
         return val_loss, val_mae, val_rmse, val_r2

@@ -4,12 +4,12 @@ import datasets
 import models
 
 CONFIG = {
-    'model module': models.VisNet,
-    'dimensions': (460,300),
+    'model module': models.VisNetReduced,
+    'dimensions': (150,230),
     'classes': 1,
     'channels': 3,
     'split': 0.75,
-    'batch size': 16,
+    'batch size': 32,
     'cuda': True,
     'loss function': nn.SmoothL1Loss(),
     'optimizer': torch.optim.Adam,

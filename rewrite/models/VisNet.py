@@ -10,7 +10,6 @@ PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#
                                                                    '#007D05', '#7CBE00', '#FBFE00',
                                                                    '#FF7F00', '#FF0500'])
 
-
 class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
@@ -88,7 +87,6 @@ class Model(nn.Module):
         cat = torch.cat((fft, pc_orig), 1)
         
         return self.linear(cat)
-
 
 def create(img_dim, num_classes, num_channels):
     net = Model(num_classes, num_channels)

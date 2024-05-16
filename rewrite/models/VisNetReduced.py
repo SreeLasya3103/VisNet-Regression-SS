@@ -1,6 +1,14 @@
 import torch
 import torch.nn as nn
+import image_processing as ip
+import matplotlib
+import math
 import torchvision.transforms as tf
+ 
+PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#3F003F', '#7E007E',
+                                                                   '#4300BD', '#0300FD', '#003F82',
+                                                                   '#007D05', '#7CBE00', '#FBFE00',
+                                                                   '#FF7F00', '#FF0500'])
  
 class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
@@ -52,7 +60,7 @@ class Model(nn.Module):
         self.linear = nn.Sequential(*linear)
         
     def forward(self, x):
-        x = self.normalize(self.mean, self.std)
+        x = self.normalize(x)
         x = x.permute((1, 0, 2, 3, 4))
         
         fft = self.fft_1(x[2])
@@ -91,3 +99,46 @@ def create_and_save(img_dim, num_classes, num_channels):
     net = create(img_dim, num_classes, num_channels)
     m = torch.jit.script(net)
     m.save('VisNet-' + str(num_channels) + 'x' + str(img_dim[1]) + 'x' + str(img_dim[0]) + '-' + str(num_classes) + '.pt')
+    
+def highpass_filter(img, mask_radius=0.2):
+    img = torch.fft.fft2(img)
+    img = torch.fft.fftshift(img)
+    
+    mask = torch.ones(img.size(), dtype=torch.float32)
+    center = ((mask.size(1)-1)/2, (mask.size(2)-1)/2)
+    
+    for h, row in enumerate(mask[0]):
+        for w, p in enumerate(row):
+            h_dist = abs(h-center[0]) / ((mask.size(1)-1)/2)
+            w_dist = abs(w-center[1]) / ((mask.size(2)-1)/2)
+            distance = math.sqrt(h_dist**2 + w_dist**2)
+            
+            if distance < mask_radius:
+                mask[0][h][w] = (distance/mask_radius)**8
+                
+    img = img * mask
+    
+    img = torch.fft.ifftshift(img)    
+    img = torch.fft.ifft2(img)
+    img = img.type(torch.float32)
+    
+    img = torch.clamp(img, 0.0, 1.0)
+    
+    return img
+
+def get_tf_function(dim):
+    def transform(img):
+        img = ip.resize_crop(img, dim)
+        
+        pc = torch.from_numpy(PC_CMAP(img[2].unsqueeze(0))).permute((0,3,1,2))
+        pc = torch.stack((pc[0][0], pc[0][1], pc[0][2]))
+        
+        fft = highpass_filter(img)
+        fft = torch.from_numpy(PC_CMAP(img)).permute((0,3,1,2))
+        fft = torch.stack((fft[0][0], fft[0][1], fft[0][2]))
+        
+        stack = torch.stack((img,pc,fft))
+        
+        return stack
+    
+    return transform
