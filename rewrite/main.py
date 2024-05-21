@@ -24,8 +24,7 @@ CONFIG = config.CONFIG
 print('Preparing dataset...')
 transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer)
-train_set, val_set = data.random_split(dset, (CONFIG['split'], 1-CONFIG['split']))
-
+train_set, val_set, test_set = data.random_split(dset, CONFIG['split'])
 
 print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]
@@ -75,6 +74,6 @@ params = {
 }
 
 if CONFIG['classes'] > 1:
-    tv.train_cls(train_set, val_set, model, params)
+    tv.train_cls(train_set, val_set, test_set, model, params)
 elif CONFIG['classes'] == 1:
-    tv.train_reg(train_set, val_set, model, params)
+    tv.train_reg(train_set, val_set, test_set, model, params)

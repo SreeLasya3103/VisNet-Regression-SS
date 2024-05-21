@@ -7,7 +7,7 @@ import torch.nn.functional as f
 from torcheval.metrics.functional import r2_score
 import math
 
-def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
+def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
     
     batch_size = params['batch_size']
@@ -96,17 +96,21 @@ def train_cls(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         print('\nValidating loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
         
-        writer.add_scalar('Loss/train', train_loss, epoch+1)
-        writer.add_scalar('Acc/train', train_accuracy, epoch+1)
-        writer.add_scalar('Loss/val', val_loss, epoch+1)
-        writer.add_scalar('Acc/val', val_accuracy, epoch+1)
-        writer.flush()
-        
         torch.save(model.state_dict(), 'last.pt')
         
         if val_loss > best_loss:
             best_loss = val_loss
             torch.save(model.state_dict(), 'best-loss.pt')
+            
+        test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn)
+        
+        writer.add_scalar('Loss/train', train_loss, epoch+1)
+        writer.add_scalar('Acc/train', train_accuracy, epoch+1)
+        writer.add_scalar('Loss/val', val_loss, epoch+1)
+        writer.add_scalar('Acc/val', val_accuracy, epoch+1)
+        writer.add_scalar('Loss/test', test_loss, epoch+1)
+        writer.add_scalar('Acc/test', test_accuracy, epoch+1)
+        writer.flush()
         
         if scheduler:
             scheduler.step()
