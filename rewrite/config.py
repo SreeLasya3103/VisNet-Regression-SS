@@ -5,13 +5,13 @@ import models
 
 CONFIG = {
     'model module': models.VisNetReduced,
-    'dimensions': (150,230),
-    'classes': 1,
+    'dimensions': (300,460),
+    'classes': 15,
     'channels': 3,
     'split': 0.75,
-    'batch size': 32,
+    'batch size': 16,
     'cuda': True,
-    'loss function': nn.SmoothL1Loss(),
+    'loss function': nn.CrossEntropyLoss(),
     'optimizer': torch.optim.Adam,
     'optim params': {
       'lr': 0.00001,
@@ -21,6 +21,6 @@ CONFIG = {
 
     },
     'epochs': 80,
-    'dataset': datasets.Webcams.Webcams_reg,
+    'dataset': datasets.Webcams.Webcams_cls,
     'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams'
 }

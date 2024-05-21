@@ -52,9 +52,6 @@ for i, (data, labels) in enumerate(train_loader):
 
 std = torch.sqrt(square_dif)
 
-print(mean.size())
-print(std.size())
-
 model = CONFIG['model module'].Model(CONFIG['classes'], CONFIG['channels'], mean, std)
 
 optimizer = CONFIG['optimizer'](model.parameters(), **CONFIG['optim params'])
