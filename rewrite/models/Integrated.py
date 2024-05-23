@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as tf
+import image_processing as ip
+import torchvision.transforms as tf
+import matplotlib
+
+PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#0000ff', '#00ff00', '#ff0000', '#0000ff'])
 
 class Xception(nn.Module):
     def __init__(self, num_channels):
@@ -144,3 +148,16 @@ def create_and_save(img_dim, num_classes, num_channels):
     net = create(img_dim, num_classes, num_channels)
     m = torch.jit.script(net)
     m.save('Integrated-' + str(num_channels) + 'x' + str(img_dim[1]) + 'x' + str(img_dim[0]) + '-' + str(img_dim) + '.pt')
+    
+def get_tf_function(dim):
+    def transform(img):
+        img = ip.resize_crop(img, dim)
+        
+        pc = torch.from_numpy(PC_CMAP(img[2].unsqueeze(0))).permute((0,3,1,2))
+        pc = torch.stack((pc[0][0], pc[0][1], pc[0][2]))
+        
+        stack = torch.stack((img,pc))
+        
+        return stack
+    
+    return transform
