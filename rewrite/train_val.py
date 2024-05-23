@@ -24,17 +24,15 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     hparams = {
         'model': params['model_name'],
         'dataset': params['dset_name'],
-        'train split': params['split'][0],
-        'val split': params['split'][1],
-        'test split': params['split'][2],
+        'split': str(params['split']),
         'loss function': loss_fn.__class__.__name__,
-        'learning rate': learning_rate,
+        'learning rate': str(learning_rate),
         'optimizer': optimizer.__class__.__name__,
         'scheduler': scheduler.__class__.__name__,
-        'batch size': batch_size,
-        'epochs': epochs,
-        'classes': num_classes,
-        'channels': num_channels
+        'batch size': str(batch_size),
+        'epochs': str(epochs),
+        'classes': str(num_classes),
+        'channels': str(num_channels)
     }
     
     writer.add_hparams(hparams, {})
@@ -177,17 +175,15 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     hparams = {
         'model': params['model_name'],
         'dataset': train_set.__class__.__name__,
-        'train split': params['split'][0],
-        'val split': params['split'][1],
-        'test split': params['split'][2],
+        'split': str(params['split']),
         'loss function': loss_fn.__class__.__name__,
-        'learning rate': learning_rate,
+        'learning rate': str(learning_rate),
         'optimizer': optimizer.__class__.__name__,
         'scheduler': scheduler.__class__.__name__,
-        'batch size': batch_size,
-        'epochs': epochs,
-        'num classes': num_classes,
-        'num channels': num_channels
+        'batch size': str(batch_size),
+        'epochs': str(epochs),
+        'num classes': str(num_classes),
+        'num channels': str(num_channels)
     }
     
     writer.add_hparams(hparams, {})
