@@ -102,15 +102,16 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         if val_loss > best_loss:
             best_loss = val_loss
             torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
-            
-        test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn)
+        
         
         writer.add_scalar('Loss/train', train_loss, epoch+1)
         writer.add_scalar('Acc/train', train_accuracy, epoch+1)
         writer.add_scalar('Loss/val', val_loss, epoch+1)
         writer.add_scalar('Acc/val', val_accuracy, epoch+1)
-        writer.add_scalar('Loss/test', test_loss, epoch+1)
-        writer.add_scalar('Acc/test', test_accuracy, epoch+1)
+        if test_set.__len__() > 0:
+            test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn)
+            writer.add_scalar('Loss/test', test_loss, epoch+1)
+            writer.add_scalar('Acc/test', test_accuracy, epoch+1)
         writer.flush()
         
         if scheduler:
@@ -268,8 +269,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         if val_r2 > best_r2:
             best_r2 = val_r2
             torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-r2.pt'))
-            
-        test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, batch_size, model, use_cuda, loss_fn)
+        
             
         writer.add_scalar('Loss/train', train_loss, epoch+1)
         writer.add_scalar('MAE/train', train_mae, epoch+1)
@@ -279,10 +279,12 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('MAE/val', val_mae, epoch+1)
         writer.add_scalar('RMSE/val', val_rmse, epoch+1)
         writer.add_scalar('R2/val', val_r2, epoch+1)
-        writer.add_scalar('Loss/test', test_loss, epoch+1)
-        writer.add_scalar('MAE/test', test_mae, epoch+1)
-        writer.add_scalar('RMSE/test', test_rmse, epoch+1)
-        writer.add_scalar('R2/test', test_r2, epoch+1)
+        if test_set.__len__() > 0:
+            test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, batch_size, model, use_cuda, loss_fn)
+            writer.add_scalar('Loss/test', test_loss, epoch+1)
+            writer.add_scalar('MAE/test', test_mae, epoch+1)
+            writer.add_scalar('RMSE/test', test_rmse, epoch+1)
+            writer.add_scalar('R2/test', test_r2, epoch+1)
         writer.flush()
         
         if scheduler:

@@ -7,6 +7,30 @@ import models
 import models.VisNet
 from torch.optim import lr_scheduler as sched
 
+CONFIG = {
+    'model module': models.VisNet,
+    'dimensions': (90,160),
+    'classes': 1,
+    'channels': 3,
+    'split': (0.75, 0.25, 0.0),
+    'batch size': 32,
+    'cuda': True,
+    'loss function': nn.SmoothL1Loss(),
+    'optimizer': torch.optim.Adam,
+    'optim params': {
+      'lr': 0.00005,
+    },
+    'scheduler': None,
+    'scheduler params': {
+
+    },
+    'epochs': 80,
+    'dataset': datasets.Jacobs.Jacobs,
+    'dataset name': 'Jacobs',
+    'dataset path': '/home/feet/Documents/LAWN/datasets/jacobs/JACOBS'
+}
+
+
 #VisNet FROSI
 
 # CONFIG = {
@@ -32,33 +56,33 @@ from torch.optim import lr_scheduler as sched
 #     'dataset path': '/home/feet/Documents/LAWN/datasets/FROSI'
 # }
 
-#RMEP SSF
+# #RMEP SSF
 
-def lr_decay(epoch):
-  if epoch < 50:
-    return 1.0
-  else:
-    return (150.0 - epoch) / 100.0
+# def lr_decay(epoch):
+#   if epoch < 50:
+#     return 1.0
+#   else:
+#     return (150.0 - epoch) / 100.0
 
-CONFIG = {
-    'model module': models.RMEP,
-    'dimensions': (120,160),
-    'classes': 1,
-    'channels': 3,
-    'split': (0.64, 0.16, 0.20),
-    'batch size': 16,
-    'cuda': True,
-    'loss function': nn.SmoothL1Loss(),
-    'optimizer': torch.optim.Adam,
-    'optim params': {
-      'lr': .00001,
-    },
-    'scheduler': None,
-    'scheduler params': {
-      'lr_lambda': lr_decay
-    },
-    'epochs': 150,
-    'dataset': datasets.SSF.SSF_reg,
-    'dataset name': 'SSF',
-    'dataset path': '/home/feet/Documents/LAWN/datasets/SSF'
-}
+# CONFIG = {
+#     'model module': models.RMEP,
+#     'dimensions': (120,160),
+#     'classes': 1,
+#     'channels': 3,
+#     'split': (0.64, 0.16, 0.20),
+#     'batch size': 16,
+#     'cuda': True,
+#     'loss function': nn.SmoothL1Loss(),
+#     'optimizer': torch.optim.Adam,
+#     'optim params': {
+#       'lr': .00001,
+#     },
+#     'scheduler': None,
+#     'scheduler params': {
+#       'lr_lambda': lr_decay
+#     },
+#     'epochs': 150,
+#     'dataset': datasets.SSF.SSF_reg,
+#     'dataset name': 'SSF',
+#     'dataset path': '/home/feet/Documents/LAWN/datasets/SSF'
+# }

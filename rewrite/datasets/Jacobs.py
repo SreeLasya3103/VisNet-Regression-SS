@@ -9,7 +9,7 @@ class Jacobs(Dataset):
     def __init__(self, dataset_dir, transform=lambda x:x):
         self.files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.transform = transform
-        self.database_path = path.normpath(dataset_dir + '/images/fog_v1.db')
+        self.database_path = path.normpath(dataset_dir + '/fog_v1.db')
                 
     def __len__(self):
         return len(self.files)
@@ -28,6 +28,6 @@ class Jacobs(Dataset):
         cur = con.cursor()
         res = cur.execute(f"SELECT fogFarVisDist from capture WHERE path='{db_img_path}'")
 
-        value = torch.tensor([res.fetchone()[0]], torch.float32)
+        value = torch.tensor([res.fetchone()[0]], dtype=torch.float32)
         
         return (data, value)
