@@ -6,6 +6,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 import torch.nn.functional as f
 from torcheval.metrics.functional import r2_score
 import math
+from os import path
 
 def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
@@ -22,16 +23,18 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     
     hparams = {
         'model': params['model_name'],
-        'dataset': train_set.__class__.__name__,
-        'train split': params['split'],
+        'dataset': params['dset_name'],
+        'train split': params['split'][0],
+        'val split': params['split'][1],
+        'test split': params['split'][2],
         'loss function': loss_fn.__class__.__name__,
         'learning rate': learning_rate,
         'optimizer': optimizer.__class__.__name__,
         'scheduler': scheduler.__class__.__name__,
         'batch size': batch_size,
         'epochs': epochs,
-        'num classes': num_classes,
-        'num channels': num_channels
+        'classes': num_classes,
+        'channels': num_channels
     }
     
     writer.add_hparams(hparams, {})
@@ -96,11 +99,11 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         print('\nValidating loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
         
-        torch.save(model.state_dict(), 'last.pt')
+        torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
         
         if val_loss > best_loss:
             best_loss = val_loss
-            torch.save(model.state_dict(), 'best-loss.pt')
+            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
             
         test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn)
         
@@ -157,49 +160,8 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn):
         val_accuracy = correct/total
         
         return val_loss, val_accuracy
-
-
-    val_loader = DataLoader(dataset, batch_size, True)
     
-    if use_cuda:
-        model.cuda()
-        
-    with torch.inference_mode():
-        print('Validating...')
-        
-        model.eval()
-        
-        bar = Bar()
-        bar.max = len(val_loader)
-        
-        correct = 0
-        total = 0
-        running_loss = 0.0
-        
-        for step, (data, labels) in enumerate(val_loader):
-            if use_cuda:
-                data = data.cuda()
-                labels = labels.cuda()
-            
-            total += labels.size(0)
-    
-            
-            output = model(data)
-            loss = loss_fn(output, labels)
-            running_loss += output.size(0) * loss.item()
-            
-            for i, guess in enumerate(output):
-                if guess.argmax() == labels[i].argmax():
-                    correct += 1
-            
-            bar.next()
-            
-        val_loss = running_loss/total
-        val_accuracy = correct/total
-        
-        return val_loss, val_accuracy
-    
-def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
+def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
     
     batch_size = params['batch_size']
@@ -215,7 +177,9 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
     hparams = {
         'model': params['model_name'],
         'dataset': train_set.__class__.__name__,
-        'train split': params['split'],
+        'train split': params['split'][0],
+        'val split': params['split'][1],
+        'test split': params['split'][2],
         'loss function': loss_fn.__class__.__name__,
         'learning rate': learning_rate,
         'optimizer': optimizer.__class__.__name__,
@@ -303,6 +267,14 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         print('Validation RMSE: ' + str(val_rmse))
         print('Validation R2  : ' + str(val_r2))
         
+        torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
+        
+        if val_r2 > best_r2:
+            best_r2 = val_r2
+            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-r2.pt'))
+            
+        test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, batch_size, model, use_cuda, loss_fn)
+            
         writer.add_scalar('Loss/train', train_loss, epoch+1)
         writer.add_scalar('MAE/train', train_mae, epoch+1)
         writer.add_scalar('RMSE/train', train_rmse, epoch+1)
@@ -311,13 +283,11 @@ def train_reg(train_set: Dataset, val_set: Dataset, model: nn.Module, params):
         writer.add_scalar('MAE/val', val_mae, epoch+1)
         writer.add_scalar('RMSE/val', val_rmse, epoch+1)
         writer.add_scalar('R2/val', val_r2, epoch+1)
+        writer.add_scalar('Loss/test', test_loss, epoch+1)
+        writer.add_scalar('MAE/test', test_mae, epoch+1)
+        writer.add_scalar('RMSE/test', test_rmse, epoch+1)
+        writer.add_scalar('R2/test', test_r2, epoch+1)
         writer.flush()
-        
-        torch.save(model.state_dict(), 'last.pt')
-        
-        if val_r2 > best_r2:
-            best_r2 = val_r2
-            torch.save(model.state_dict(), 'best-r2.pt')
         
         if scheduler:
             scheduler.step()

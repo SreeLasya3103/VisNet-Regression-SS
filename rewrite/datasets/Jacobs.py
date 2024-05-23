@@ -21,13 +21,13 @@ class Jacobs(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         data = self.transform(data)
-        data = data.float()
+        data = data.to(torch.float32)
         
         db_img_path = "images/" + path.basename(img_path)
         con = sqlite3.connect(self.database_path)
         cur = con.cursor()
         res = cur.execute(f"SELECT fogFarVisDist from capture WHERE path='{db_img_path}'")
 
-        value = torch.tensor([res.fetchone()[0]])
+        value = torch.tensor([res.fetchone()[0]], torch.float32)
         
         return (data, value)

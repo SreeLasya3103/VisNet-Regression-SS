@@ -22,7 +22,9 @@ CONFIG = config.CONFIG
 
 
 print('Preparing dataset...')
-transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
+transformer = lambda x: x
+if hasattr(CONFIG['model module'], 'get_tf_function'):
+    transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer)
 train_set, val_set, test_set = data.random_split(dset, CONFIG['split'])
 
@@ -36,7 +38,7 @@ bar = Bar()
 bar.max = len(train_loader)
 
 for i, (data, labels) in enumerate(train_loader):
-    mean += torch.mean(data, 0) * 64 / train_set.__len__()
+    mean += torch.div(torch.mean(data, 0) * 64, train_set.__len__())
     bar.next()
 
 print('\nCalculating std...')
@@ -46,10 +48,11 @@ bar.max = len(train_loader)
 square_dif = torch.zeros(sample.size(), dtype=torch.float32)
     
 for i, (data, labels) in enumerate(train_loader):
-    square_dif += torch.sum(torch.square(data - mean), dim=0) / (train_set.__len__()-1)
+    square_dif += torch.div(torch.sum(torch.square(data - mean), dim=0), (train_set.__len__()-1))
     bar.next()
 
-std = torch.sqrt(square_dif)
+std = torch.sqrt(square_dif).apply_(lambda x: 1.0 if x == 0.0 else x)
+
 
 model = CONFIG['model module'].Model(CONFIG['classes'], CONFIG['channels'], mean, std)
 
@@ -71,6 +74,7 @@ params = {
     'learning_rate': CONFIG['optim params']['lr'],
     'model_name': CONFIG['model module'].__name__,
     'split': CONFIG['split'],
+    'dset_name': CONFIG['dataset name']
 }
 
 if CONFIG['classes'] > 1:

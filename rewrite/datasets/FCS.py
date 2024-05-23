@@ -19,7 +19,7 @@ class FCS(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         data = self.transform(data)
-        data = data.float()
+        data = data.to(torch.float32)
         
         value = None
         if '0.02.png' in img_path:
@@ -28,7 +28,7 @@ class FCS(Dataset):
             value = torch.Tensor([0,1,0])
         elif '0.005.png' in img_path:
             value = torch.Tensor([0,0,1])
-        value = value.float()
+        value = value.to(torch.float32)
         
         return (data, value)
         

@@ -8,7 +8,7 @@ from sys import maxsize
 import torchvision.io as io
 
 class SSF_reg(Dataset):
-    def __init__(self, dataset_dir, transform=lambda x:x, ten_plus_limit=350):
+    def __init__(self, dataset_dir, transform=lambda x:x, ten_plus_limit=99999):
         self.files = []
         self.transform = transform
         self.labels_dict = None
@@ -46,11 +46,11 @@ class SSF_reg(Dataset):
             
         img_path = self.files[idx]
         dict_key = path.basename(img_path)[-19:]
-        value = torch.tensor([self.labels_dict[dict_key]]).float()
+        value = torch.tensor([self.labels_dict[dict_key]]).to(torch.float32)
         
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         data = self.transform(data)
-        data = data.float()
+        data = data.to(torch.float32)
         
         return (data, value)
         
