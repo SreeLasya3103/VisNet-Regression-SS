@@ -57,14 +57,6 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         total = 0
         running_loss = 0.0
         
-        # current_lr = 0.0
-        # if scheduler:
-        #     current_lr = scheduler.get_lr()
-        # else:
-        #     current_lr = learning_rate
-        
-        # writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
-        
         for step, (data, labels) in enumerate(train_loader):
             if use_cuda:
                 data = data.cuda()
@@ -216,13 +208,6 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             all_outputs = all_outputs.cuda()
             all_labels = all_labels.cuda()
         
-        # current_lr = 0.0
-        # if scheduler:
-        #     current_lr = scheduler.get_lr()
-        # else:
-        #     current_lr = learning_rate
-        
-        # writer.add_hparams({'learning rate': current_lr}, {}, global_step=epoch+1)
         
         for step, (data, labels) in enumerate(train_loader):
             if use_cuda:

@@ -53,6 +53,8 @@ for i, (data, labels) in enumerate(train_loader):
 
 std = torch.sqrt(square_dif).apply_(lambda x: 1.0 if x == 0.0 else x)
 
+# std = torch.ones(sample.size(), dtype=torch.float32)
+
 
 model = CONFIG['model module'].Model(CONFIG['classes'], CONFIG['channels'], mean, std)
 

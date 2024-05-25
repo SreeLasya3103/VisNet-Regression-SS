@@ -10,9 +10,9 @@ class Model(nn.Module):
 
         model = [nn.Conv2d(num_channels, 16, 3),
                  nn.InstanceNorm2d(16),
-                 nn.ReLU(True)]
+                 ]
         
-        model += nn.MaxPool2d((2,2))
+        model += [nn.MaxPool2d((2,2))]
         
         model += [nn.Flatten(), nn.LazyLinear(num_classes)]
 

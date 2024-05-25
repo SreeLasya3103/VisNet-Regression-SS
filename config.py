@@ -4,11 +4,12 @@ import datasets
 import datasets.FROSI
 import datasets.SSF
 import models
+import models.Minimum
 import models.VisNet
 from torch.optim import lr_scheduler as sched
 
 CONFIG = {
-    'model module': models.VisNet,
+    'model module': models.Minimum,
     'dimensions': (90,160),
     'classes': 1,
     'channels': 3,
@@ -18,7 +19,7 @@ CONFIG = {
     'loss function': nn.SmoothL1Loss(),
     'optimizer': torch.optim.Adam,
     'optim params': {
-      'lr': 0.00005,
+      'lr': 0.0000001,
     },
     'scheduler': None,
     'scheduler params': {
