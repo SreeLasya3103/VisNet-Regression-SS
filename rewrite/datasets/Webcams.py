@@ -75,15 +75,16 @@ class Webcams_cls(Dataset):
             string_value = path.basename(img_path)
             string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
             float_value = float(string_value)
-            float_value = 10.0 if float_value >= 10.0 else float_value
             if float_value == 9.0:
                 if nine_count < nine_limit:
                     self.files.append(img_path)
                     nine_count += 1
-            elif float_value == 10.0:
+            elif float_value >= 10.0:
                 if ten_count < ten_limit:
                     self.files.append(img_path)
                     ten_count += 1
+            else:
+                self.files.append(img_path)
                 
     def __len__(self):
         return len(self.files)

@@ -9,30 +9,30 @@ import models.VisNet
 from torch.optim import lr_scheduler as sched
 
 CONFIG = {
-    'model module': models.Minimum,
-    'dimensions': (90,160),
-    'classes': 1,
+    'model module': models.VisNet,
+    'dimensions': (200,200),
+    'classes': 3,
     'channels': 3,
-    'split': (0.75, 0.25, 0.0),
+    'split': (0.75, 0.10, 0.15),
     'batch size': 32,
     'cuda': True,
-    'loss function': nn.SmoothL1Loss(),
+    'loss function': nn.CrossEntropyLoss(),
     'optimizer': torch.optim.Adam,
     'optim params': {
-      'lr': 0.0000001,
+      'lr': 0.00001,
     },
     'scheduler': None,
     'scheduler params': {
 
     },
     'epochs': 80,
-    'dataset': datasets.Jacobs.Jacobs,
-    'dataset name': 'Jacobs',
-    'dataset path': '/home/feet/Documents/LAWN/datasets/jacobs/JACOBS'
+    'dataset': datasets.FCS.FCS,
+    'dataset name': 'FCS',
+    'dataset path': '/home/jmurray/LAWN/datasets/FCS'
 }
 
 
-#VisNet FROSI
+# VisNet FROSI
 
 # CONFIG = {
 #     'model module': models.VisNet,

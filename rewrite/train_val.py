@@ -167,7 +167,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     
     hparams = {
         'model': params['model_name'],
-        'dataset': train_set.__class__.__name__,
+        'dataset': params['dset_name'],
         'split': str(params['split']),
         'loss function': loss_fn.__class__.__name__,
         'learning rate': str(learning_rate),
