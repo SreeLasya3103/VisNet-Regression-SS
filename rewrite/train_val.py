@@ -20,6 +20,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     num_classes = params['num_classes']
     num_channels = params['num_channels']
     learning_rate = params['learning_rate']
+    batch_splits = params['batch_splits']
     
     hparams = {
         'model': params['model_name'],
@@ -61,12 +62,21 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             if use_cuda:
                 data = data.cuda()
                 labels = labels.cuda()
+                
+            sub_batches = torch.split(data, 2**batch_splits)
             
             total += labels.size(0)
             
             optimizer.zero_grad()
             
-            output = model(data)
+            output = None
+            
+            for sb in sub_batches:
+                if output:
+                    output = torch.cat((output, model(sb)))
+                else:
+                    output = model(sb)
+            
             loss = loss_fn(output, labels)
             loss.backward()
             running_loss += output.size(0) * loss.item()

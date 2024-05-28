@@ -3,6 +3,7 @@ import torch.nn as nn
 import datasets
 import datasets.FROSI
 import datasets.SSF
+import datasets.Webcams
 import models
 import models.Minimum
 import models.VisNet
@@ -10,11 +11,12 @@ from torch.optim import lr_scheduler as sched
 
 CONFIG = {
     'model module': models.VisNet,
-    'dimensions': (200,200),
-    'classes': 3,
+    'dimensions': (154,234),
+    'classes': 15,
     'channels': 3,
     'split': (0.75, 0.10, 0.15),
     'batch size': 32,
+    'batch splits': 1, 
     'cuda': True,
     'loss function': nn.CrossEntropyLoss(),
     'optimizer': torch.optim.Adam,
@@ -26,9 +28,9 @@ CONFIG = {
 
     },
     'epochs': 80,
-    'dataset': datasets.FCS.FCS,
-    'dataset name': 'FCS',
-    'dataset path': '/home/jmurray/LAWN/datasets/FCS'
+    'dataset': datasets.Webcams.Webcams_cls,
+    'dataset name': 'Webcams cls',
+    'dataset path': '/home/jmurray/LAWN/datasets/Webcams'
 }
 
 
