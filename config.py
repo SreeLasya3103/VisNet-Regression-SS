@@ -16,7 +16,7 @@ CONFIG = {
     'channels': 3,
     'split': (0.75, 0.10, 0.15),
     'batch size': 32,
-    'batch splits': 1, 
+    'batch splits': 2, 
     'cuda': True,
     'loss function': nn.CrossEntropyLoss(),
     'optimizer': torch.optim.Adam,
@@ -30,7 +30,7 @@ CONFIG = {
     'epochs': 80,
     'dataset': datasets.Webcams.Webcams_cls,
     'dataset name': 'Webcams cls',
-    'dataset path': '/home/jmurray/LAWN/datasets/Webcams'
+    'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams'
 }
 
 

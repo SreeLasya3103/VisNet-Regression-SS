@@ -68,12 +68,12 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             
             total += labels.size(0)
             
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             
             sub_batches = torch.split(data, 2**batch_splits)
             output = None
             for sb in sub_batches:
-                if output:
+                if output is not None:
                     output = torch.cat((output, model(sb)))
                 else:
                     output = model(sb)
@@ -150,7 +150,7 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
             sub_batches = torch.split(data, 2**batch_splits)
             output = None
             for sb in sub_batches:
-                if output:
+                if output is not None:
                     output = torch.cat((output, model(sb)))
                 else:
                     output = model(sb)
@@ -236,12 +236,12 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             
             total += labels.size(0)
     
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             
             sub_batches = torch.split(data, 2**batch_splits)
             output = None
             for sb in sub_batches:
-                if output:
+                if output is not None:
                     output = torch.cat((output, model(sb)))
                 else:
                     output = model(sb)
@@ -339,7 +339,7 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
             sub_batches = torch.split(data, 2**batch_splits)
             output = None
             for sb in sub_batches:
-                if output:
+                if output is not None:
                     output = torch.cat((output, model(sb)))
                 else:
                     output = model(sb)
