@@ -71,23 +71,20 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             optimizer.zero_grad(set_to_none=True)
             
             sub_batches = torch.split(data, 2**batch_splits)
-            output = None
-            for sb in sub_batches:
-                if output is not None:
-                    output = torch.cat((output, model(sb)))
-                else:
-                    output = model(sb)
-            
-            loss = loss_fn(output, labels)
-            loss.backward()
-            running_loss += output.size(0) * loss.item()
+            sub_labels = torch.split(labels, 2**batch_splits)
+            for sb, sl in zip(sub_batches, sub_labels):
+                output = model(sb)
+                
+                loss = loss_fn(output, sl)
+                loss.backward()
+                
+                running_loss += sb.size(0) * loss.item()
+                
+                for i, guess in enumerate(output):
+                    if guess.argmax() == sl[i].argmax():
+                        correct += 1
             
             optimizer.step()
-            
-            for i, guess in enumerate(output):
-                if guess.argmax() == labels[i].argmax():
-                    correct += 1
-            
             bar.next()
         
         train_loss = running_loss/total
@@ -148,19 +145,17 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
             total += labels.size(0)
     
             sub_batches = torch.split(data, 2**batch_splits)
-            output = None
-            for sb in sub_batches:
-                if output is not None:
-                    output = torch.cat((output, model(sb)))
-                else:
-                    output = model(sb)
-
-            loss = loss_fn(output, labels)
-            running_loss += output.size(0) * loss.item()
-            
-            for i, guess in enumerate(output):
-                if guess.argmax() == labels[i].argmax():
-                    correct += 1
+            sub_labels = torch.split(labels, 2**batch_splits)
+            for sb, sl in zip(sub_batches, sub_labels):
+                output = model(sb)
+                
+                loss = loss_fn(output, sl)
+                
+                running_loss += sb.size(0) * loss.item()
+                
+                for i, guess in enumerate(output):
+                    if guess.argmax() == sl[i].argmax():
+                        correct += 1
             
             bar.next()
             
@@ -239,25 +234,20 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             optimizer.zero_grad(set_to_none=True)
             
             sub_batches = torch.split(data, 2**batch_splits)
-            output = None
-            for sb in sub_batches:
-                if output is not None:
-                    output = torch.cat((output, model(sb)))
-                else:
-                    output = model(sb)
-            
-            loss = loss_fn(output, labels)
-            loss.backward()
-            running_loss += output.size(0) * loss.item()
+            sub_labels = torch.split(labels, 2**batch_splits)
+            for sb, sl in zip(sub_batches, sub_labels):
+                output = model(sb)
+                all_outputs = torch.cat((all_outputs, output))
+                all_labels = torch.cat((all_labels, sl))
+                
+                loss = loss_fn(output, sl)
+                loss.backward()
+                
+                running_loss += sb.size(0) * loss.item()
+                running_mae += f.l1_loss(output, sl, reduction='sum').item()
+                running_mse += f.mse_loss(output, sl, reduction='sum').item()
             
             optimizer.step()
-            
-            all_outputs = torch.cat((all_outputs, output))
-            all_labels = torch.cat((all_labels, labels))
-            
-            running_mae += f.l1_loss(output, labels, reduction='sum').item()
-            running_mse += f.mse_loss(output, labels, reduction='sum').item()
-            
             bar.next()
         
         train_loss = running_loss/total
@@ -337,21 +327,17 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
             total += labels.size(0)
             
             sub_batches = torch.split(data, 2**batch_splits)
-            output = None
-            for sb in sub_batches:
-                if output is not None:
-                    output = torch.cat((output, model(sb)))
-                else:
-                    output = model(sb)
-            
-            loss = loss_fn(output, labels)
-            running_loss += output.size(0) * loss.item()
-            
-            all_outputs = torch.cat((all_outputs, output))
-            all_labels = torch.cat((all_labels, labels))
-
-            running_mae += f.l1_loss(output, labels, reduction='sum').item()
-            running_mse += f.mse_loss(output, labels, reduction='sum').item()
+            sub_labels = torch.split(labels, 2**batch_splits)
+            for sb, sl in zip(sub_batches, sub_labels):
+                output = model(sb)
+                all_outputs = torch.cat((all_outputs, output))
+                all_labels = torch.cat((all_labels, sl))
+                
+                loss = loss_fn(output, sl)
+                
+                running_loss += sb.size(0) * loss.item()
+                running_mae += f.l1_loss(output, sl, reduction='sum').item()
+                running_mse += f.mse_loss(output, sl, reduction='sum').item()
             
             bar.next()
         
