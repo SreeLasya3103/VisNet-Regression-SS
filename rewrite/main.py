@@ -26,7 +26,9 @@ transformer = lambda x: x
 if hasattr(CONFIG['model module'], 'get_tf_function'):
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer)
-train_set, val_set, test_set = data.random_split(dset, CONFIG['split'])
+gen = torch.Generator()
+gen = gen.manual_seed(37)
+train_set, val_set, test_set = data.random_split(dset, CONFIG['split'], gen)
 
 print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]
