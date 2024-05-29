@@ -97,8 +97,8 @@ class Webcams_cls(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 47 top, 3 bottom, 3 sides
-        dims = (data.size(1)-50, data.size(2)-6)
+        #Remove 47 top, 19 bottom, 3 left, 3 right
+        dims = (data.size(1)-66, data.size(2)-6)
         data = f.crop(data, 46, 2, dims[0], dims[1])
         data = self.transform(data)
         data = data.float()

@@ -77,7 +77,8 @@ params = {
     'learning_rate': CONFIG['optim params']['lr'],
     'model_name': CONFIG['model module'].__name__,
     'split': CONFIG['split'],
-    'dset_name': CONFIG['dataset name']
+    'dset_name': CONFIG['dataset name'],
+    'image_dim': CONFIG['dimensions']
 }
 
 if CONFIG['classes'] > 1:

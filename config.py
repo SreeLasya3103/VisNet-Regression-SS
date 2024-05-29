@@ -11,7 +11,7 @@ from torch.optim import lr_scheduler as sched
 
 CONFIG = {
     'model module': models.VisNet,
-    'dimensions': (154,234),
+    'dimensions': (350,410),
     'classes': 15,
     'channels': 3,
     'split': (0.75, 0.10, 0.15),

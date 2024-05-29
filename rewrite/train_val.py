@@ -21,6 +21,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     num_channels = params['num_channels']
     learning_rate = params['learning_rate']
     batch_splits = params['batch_splits']
+    image_dim = params['image_dim']
     
     hparams = {
         'model': params['model_name'],
@@ -33,7 +34,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         'batch size': str(batch_size),
         'epochs': str(epochs),
         'classes': str(num_classes),
-        'channels': str(num_channels)
+        'channels': str(num_channels),
+        'image dimensions': str(image_dim)
     }
     
     writer.add_hparams(hparams, {})
@@ -63,14 +65,13 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
                 data = data.cuda()
                 labels = labels.cuda()
                 
-            sub_batches = torch.split(data, 2**batch_splits)
             
             total += labels.size(0)
             
             optimizer.zero_grad()
             
+            sub_batches = torch.split(data, 2**batch_splits)
             output = None
-            
             for sb in sub_batches:
                 if output:
                     output = torch.cat((output, model(sb)))
@@ -94,7 +95,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         print('\nTraining loss: ' + str(train_loss))
         print('Training accuracy: ' + str(train_accuracy))
         
-        val_loss, val_accuracy = val_cls(val_set, batch_size, model, use_cuda, loss_fn)
+        val_loss, val_accuracy = val_cls(val_set, batch_size, model, use_cuda, loss_fn, batch_splits)
         
         print('\nValidating loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
@@ -111,7 +112,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('Loss/val', val_loss, epoch+1)
         writer.add_scalar('Acc/val', val_accuracy, epoch+1)
         if test_set.__len__() > 0:
-            test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn)
+            test_loss, test_accuracy = val_cls(test_set, batch_size, model, use_cuda, loss_fn, batch_splits)
             writer.add_scalar('Loss/test', test_loss, epoch+1)
             writer.add_scalar('Acc/test', test_accuracy, epoch+1)
         writer.flush()
@@ -121,7 +122,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     
     writer.close()
         
-def val_cls(dataset, batch_size, model, use_cuda, loss_fn):
+def val_cls(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
     val_loader = DataLoader(dataset, batch_size, True)
     
     if use_cuda:
@@ -146,8 +147,14 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn):
             
             total += labels.size(0)
     
-            
-            output = model(data)
+            sub_batches = torch.split(data, 2**batch_splits)
+            output = None
+            for sb in sub_batches:
+                if output:
+                    output = torch.cat((output, model(sb)))
+                else:
+                    output = model(sb)
+
             loss = loss_fn(output, labels)
             running_loss += output.size(0) * loss.item()
             
@@ -174,6 +181,8 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     num_classes = params['num_classes']
     num_channels = params['num_channels']
     learning_rate = params['learning_rate']
+    batch_splits = params['batch_splits']
+    image_dim = params['image_dim']
     
     hparams = {
         'model': params['model_name'],
@@ -185,8 +194,9 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         'scheduler': scheduler.__class__.__name__,
         'batch size': str(batch_size),
         'epochs': str(epochs),
-        'num classes': str(num_classes),
-        'num channels': str(num_channels)
+        'classes': str(num_classes),
+        'channels': str(num_channels),
+        'image dimensions': str(image_dim)
     }
     
     writer.add_hparams(hparams, {})
@@ -228,7 +238,14 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     
             optimizer.zero_grad()
             
-            output = model(data)
+            sub_batches = torch.split(data, 2**batch_splits)
+            output = None
+            for sb in sub_batches:
+                if output:
+                    output = torch.cat((output, model(sb)))
+                else:
+                    output = model(sb)
+            
             loss = loss_fn(output, labels)
             loss.backward()
             running_loss += output.size(0) * loss.item()
@@ -252,7 +269,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         print('Training RMSE: ' + str(train_rmse))
         print('Training R2  : ' + str(train_r2))
         
-        val_loss, val_mae, val_rmse, val_r2 = val_reg(val_set, batch_size, model, use_cuda, loss_fn)
+        val_loss, val_mae, val_rmse, val_r2 = val_reg(val_set, batch_size, model, use_cuda, loss_fn, batch_splits)
         
         print('\nValidation loss: ' + str(val_loss))
         print('Validation MAE : ' + str(val_mae))
@@ -275,7 +292,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('RMSE/val', val_rmse, epoch+1)
         writer.add_scalar('R2/val', val_r2, epoch+1)
         if test_set.__len__() > 0:
-            test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, batch_size, model, use_cuda, loss_fn)
+            test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, batch_size, model, use_cuda, loss_fn, batch_splits)
             writer.add_scalar('Loss/test', test_loss, epoch+1)
             writer.add_scalar('MAE/test', test_mae, epoch+1)
             writer.add_scalar('RMSE/test', test_rmse, epoch+1)
@@ -287,7 +304,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     
     writer.close()
         
-def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
+def val_reg(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
     val_loader = DataLoader(dataset, batch_size, True)
     
     if use_cuda:
@@ -319,7 +336,14 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
             
             total += labels.size(0)
             
-            output = model(data)
+            sub_batches = torch.split(data, 2**batch_splits)
+            output = None
+            for sb in sub_batches:
+                if output:
+                    output = torch.cat((output, model(sb)))
+                else:
+                    output = model(sb)
+            
             loss = loss_fn(output, labels)
             running_loss += output.size(0) * loss.item()
             
