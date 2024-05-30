@@ -67,8 +67,8 @@ if CONFIG['scheduler']:
     scheduler = CONFIG['scheduler'](optimizer, **CONFIG['scheduler params'])
 
 params = {
-    'batch_size': CONFIG['batch size'],
-    'batch_splits': CONFIG['batch splits'],
+    'mbatch_size': CONFIG['minibatch size'],
+    'mbatch_count': CONFIG['minibatch count'],
     'use_cuda': CONFIG['cuda'],
     'loss_fn': CONFIG['loss function'],
     'scheduler': scheduler,
