@@ -8,17 +8,18 @@ import models
 import models.Minimum
 import models.VisNet
 from torch.optim import lr_scheduler as sched
+from simloss import SimLoss
 
 CONFIG = {
     'model module': models.VisNet,
-    'dimensions': (350,410),
+    'dimensions': (174,204),
     'classes': 15,
     'channels': 3,
     'split': (0.75, 0.10, 0.15),
     'batch size': 32,
-    'batch splits': 2, 
+    'batch splits': 0, 
     'cuda': True,
-    'loss function': nn.CrossEntropyLoss(),
+    'loss function': SimLoss(15, 0.4, 'cuda'),
     'optimizer': torch.optim.Adam,
     'optim params': {
       'lr': 0.00001,

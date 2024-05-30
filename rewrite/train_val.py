@@ -75,6 +75,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             for sb, sl in zip(sub_batches, sub_labels):
                 output = model(sb)
                 
+    
                 loss = loss_fn(output, sl)
                 loss.backward()
                 
@@ -148,7 +149,7 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn, batch_splits=0):
             sub_labels = torch.split(labels, 2**batch_splits)
             for sb, sl in zip(sub_batches, sub_labels):
                 output = model(sb)
-                
+
                 loss = loss_fn(output, sl)
                 
                 running_loss += sb.size(0) * loss.item()
