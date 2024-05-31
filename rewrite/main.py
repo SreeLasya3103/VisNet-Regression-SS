@@ -75,6 +75,7 @@ params = {
     'optimizer': optimizer,
     'epochs': CONFIG['epochs'],
     'num_classes': CONFIG['classes'],
+    'class_names': CONFIG['class names'],
     'num_channels': CONFIG['channels'],
     'learning_rate': CONFIG['optim params']['lr'],
     'model_name': CONFIG['model module'].__name__,
