@@ -20,7 +20,7 @@ CONFIG = {
     'minibatch size': 32,
     'minibatch count': 1, 
     'cuda': True,
-    'loss function': nn.CrossEntropyLoss(),
+    'loss function': SimLoss(15, 0.4, 'cuda'),
     'optimizer': torch.optim.Adam,
     'optim params': {
       'lr': 0.00001,

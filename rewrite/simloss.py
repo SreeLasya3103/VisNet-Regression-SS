@@ -17,7 +17,7 @@ class SimLoss(torch.nn.Module):
 
     def forward(self, x, y):
         x = torch.softmax(x, 1)
-        y = torch.argmax(y).item()
+        y = torch.argmax(y, 1)
         w = self.__w[y, :]
         return torch.mean(-torch.log(torch.sum(w * x, dim=1) + self.epsilon))
 
