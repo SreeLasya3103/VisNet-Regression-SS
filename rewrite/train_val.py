@@ -16,9 +16,9 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     writer = SummaryWriter()
     sn.set_theme(font_scale=0.4)
 
-    mbatch_size = params['mbatch_size']
-    mbatch_count = params['mbatch_count']
-    batch_size = mbatch_count * mbatch_size
+    subbatch_size = params['subbatch_size']
+    accum_steps = params['accum_steps']
+    batch_size = accum_steps * subbatch_size
     use_cuda = params['use_cuda']
     loss_fn = params['loss_fn']
     scheduler = params['scheduler']
@@ -47,7 +47,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
 
-    train_loader = DataLoader(train_set, mbatch_size, True)
+    train_loader = DataLoader(train_set, subbatch_size, True)
 
     if use_cuda:
         model.cuda()
@@ -78,7 +78,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             total += labels.size(0)
 
             output = model(data)
-            loss = loss_fn(output, labels)
+            loss = loss_fn(output, labels) / accum_steps
             loss.backward()
             running_loss += labels.size(0) * loss.item()
 
@@ -92,7 +92,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
                 if guess.argmax() == labels[i].argmax():
                     correct += 1
 
-            if (step+1) % mbatch_count == 0 or (step+1) == len(train_loader):
+            if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
+                print('stepppp')
                 optimizer.step()
                 optimizer.zero_grad(set_to_none=True)
             bar.next()
@@ -110,7 +111,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_figure('ConfMat/train', plt.gcf(), epoch+1)
 
         print('Validating...')
-        val_loss, val_accuracy, val_conf_mat = val_cls(val_set, mbatch_size, model, use_cuda, loss_fn, num_classes)
+        val_loss, val_accuracy, val_conf_mat = val_cls(val_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
 
         print('\nValidation loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
@@ -133,7 +134,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('Acc/val', val_accuracy, epoch+1)
         if test_set.__len__() > 0:
             print('Testing...')
-            test_loss, test_accuracy, test_conf_mat = val_cls(test_set, mbatch_size, model, use_cuda, loss_fn, num_classes)
+            test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
@@ -150,7 +151,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.close()
 
-def val_cls(dataset, batch_size, model, use_cuda, loss_fn, num_classes):
+def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_classes):
     val_loader = DataLoader(dataset, batch_size, True)
 
     if use_cuda:
@@ -177,7 +178,7 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn, num_classes):
             total += labels.size(0)
 
             output = model(data)
-            loss = loss_fn(output, labels)
+            loss = loss_fn(output, labels) / accum_steps
             running_loss += labels.size(0) * loss.item()
 
             for i, guess in enumerate(output):
@@ -202,9 +203,9 @@ def val_cls(dataset, batch_size, model, use_cuda, loss_fn, num_classes):
 def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
 
-    mbatch_size = params['mbatch_size']
-    mbatch_count = params['mbatch_count']
-    batch_size = mbatch_count * mbatch_size
+    subbatch_size = params['subbatch_size']
+    accum_steps = params['accum_steps']
+    batch_size = accum_steps * subbatch_size
     use_cuda = params['use_cuda']
     loss_fn = params['loss_fn']
     scheduler = params['scheduler']
@@ -232,7 +233,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
 
-    train_loader = DataLoader(train_set, mbatch_size, True)
+    train_loader = DataLoader(train_set, subbatch_size, True)
 
     if use_cuda:
         model.cuda()
@@ -268,7 +269,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             total += labels.size(0)
 
             output = model(data)
-            loss = loss_fn(output, labels)
+            loss = loss_fn(output, labels) / accum_steps
             loss.backward()
 
             all_outputs = torch.cat((all_outputs, output.detach()))
@@ -278,7 +279,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             running_mae += f.l1_loss(output, labels, reduction='sum').item()
             running_mse += f.mse_loss(output, labels, reduction='sum').item()
 
-            if (step+1) % mbatch_count == 0 or (step+1) == len(train_loader):
+            if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
                 optimizer.zero_grad(set_to_none=True)
 
@@ -294,7 +295,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         print('Training R2  : ' + str(train_r2))
 
         print('Validating...')
-        val_loss, val_mae, val_rmse, val_r2 = val_reg(val_set, mbatch_size, model, use_cuda, loss_fn)
+        val_loss, val_mae, val_rmse, val_r2 = val_reg(val_set, subbatch_size, accum_steps, model, use_cuda, loss_fn)
 
         print('\nValidation loss: ' + str(val_loss))
         print('Validation MAE : ' + str(val_mae))
@@ -317,7 +318,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('R2/val', val_r2, epoch+1)
         if test_set.__len__() > 0:
             print('Testing...')
-            test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, mbatch_size, model, use_cuda, loss_fn)
+            test_loss, test_mae, test_rmse, test_r2 = val_reg(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn)
             writer.add_scalar('Loss/test', test_loss, epoch+1)
             writer.add_scalar('MAE/test', test_mae, epoch+1)
             writer.add_scalar('RMSE/test', test_rmse, epoch+1)
@@ -329,7 +330,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.close()
 
-def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
+def val_reg(dataset, batch_size, accum_steps, model, use_cuda, loss_fn):
     val_loader = DataLoader(dataset, batch_size, True)
 
     if use_cuda:
@@ -362,7 +363,7 @@ def val_reg(dataset, batch_size, model, use_cuda, loss_fn):
             total += labels.size(0)
 
             output = model(data)
-            loss = loss_fn(output, labels)
+            loss = loss_fn(output, labels) / accum_steps
 
             all_outputs = torch.cat((all_outputs, output.detach()))
             all_labels = torch.cat((all_labels, labels))
