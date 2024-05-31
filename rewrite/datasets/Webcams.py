@@ -7,7 +7,7 @@ import torchvision.transforms.functional as f
 from random import Random
 
 class Webcams_reg(Dataset):
-    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=100, ten_limit=100):
+    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=130, ten_limit=130):
         tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.files = []
         self.transform = transform
@@ -60,7 +60,7 @@ class Webcams_reg(Dataset):
         return (data, value)
     
 class Webcams_cls(Dataset):
-    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=100, ten_limit=100):
+    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=130, ten_limit=130):
         tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.files = []
         self.transform = transform
