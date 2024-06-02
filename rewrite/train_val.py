@@ -93,7 +93,6 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
                     correct += 1
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
-                print('stepppp')
                 optimizer.step()
                 optimizer.zero_grad(set_to_none=True)
             bar.next()

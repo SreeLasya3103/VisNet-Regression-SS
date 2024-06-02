@@ -17,10 +17,10 @@ CONFIG = {
     'class names': ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0'),
     'channels': 3,
     'split': (0.75, 0.10, 0.15),
-    'subbatch size': 8,
-    'accum steps': 4, 
+    'subbatch size': 32,
+    'accum steps': 1, 
     'cuda': True,
-    'loss function': SimLoss(15, 0.4, 'cuda'),
+    'loss function': nn.CrossEntropyLoss(),
     'optimizer': torch.optim.Adam,
     'optim params': {
       'lr': 0.00001,
@@ -31,7 +31,7 @@ CONFIG = {
     },
     'epochs': 80,
     'dataset': datasets.Webcams.Webcams_cls,
-    'dataset name': 'Webcams cls',
+    'dataset name': 'Webcams cls blncd',
     'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams'
 }
 
