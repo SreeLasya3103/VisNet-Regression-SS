@@ -13,7 +13,10 @@ class SSF_reg(Dataset):
         self.transform = transform
         self.labels_dict = None
         
-        tmp_files = glob(path.normpath(dataset_dir + '/**/*.jpg'), recursive=True)
+        if isinstance(dataset_dir, list):
+            tmp_files = dataset_dir
+        else: 
+            tmp_files = glob(path.normpath(dataset_dir + '/**/*.jpg'), recursive=True)
         
         with open(path.join(dataset_dir, 'label.csv'), mode='r') as infile:
             reader = csv.reader(infile)

@@ -7,10 +7,14 @@ import torchvision.transforms.functional as f
 from random import Random
 
 class Webcams_reg(Dataset):
-    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=130, ten_limit=130):
-        tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+    def __init__(self, dataset_dir, transform=lambda x, augment:x, augment=False, nine_limit=130, ten_limit=130):
+        if isinstance(dataset_dir, list):
+            tmp_files = dataset_dir
+        else: 
+            tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.files = []
         self.transform = transform
+        self.augment = augment
         
         tmp_files.sort()
         Random(37).shuffle(tmp_files)
@@ -47,7 +51,7 @@ class Webcams_reg(Dataset):
         #Remove 47 top, 19 bottom, 3 left, 3 right
         dims = (data.size(1)-66, data.size(2)-6)
         data = f.crop(data, 46, 2, dims[0], dims[1])
-        data = self.transform(data)
+        data = self.transform(data, self.augment)
         data = data.to(torch.float32)
         
         string_value = path.basename(img_path)
@@ -60,10 +64,14 @@ class Webcams_reg(Dataset):
         return (data, value)
     
 class Webcams_cls(Dataset):
-    def __init__(self, dataset_dir, transform=lambda x:x, nine_limit=130, ten_limit=130):
-        tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+    def __init__(self, dataset_dir, transform=lambda x, augment:x, augment=False, nine_limit=130, ten_limit=130):
+        if isinstance(dataset_dir, list):
+            tmp_files = dataset_dir
+        else: 
+            tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.files = []
         self.transform = transform
+        self.augment = augment
         
         tmp_files.sort()
         Random(37).shuffle(tmp_files)
@@ -100,7 +108,7 @@ class Webcams_cls(Dataset):
         #Remove 47 top, 19 bottom, 3 left, 3 right
         dims = (data.size(1)-66, data.size(2)-6)
         data = f.crop(data, 46, 2, dims[0], dims[1])
-        data = self.transform(data)
+        data = self.transform(data, self.augment)
         data = data.float()
         
         string_value = path.basename(img_path)

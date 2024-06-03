@@ -15,6 +15,8 @@ import importlib.util
 import sys
 import numpy as np
 from random import Random
+import matplotlib.pyplot as plt
+from copy import deepcopy
 
 spec = importlib.util.spec_from_file_location("config", os.path.join(os.getcwd(), 'config.py'))
 config = importlib.util.module_from_spec(spec)
@@ -24,36 +26,33 @@ CONFIG = config.CONFIG
 
 
 print('Preparing dataset...')
-transformer = lambda x: x
+transformer = lambda x, agmnt: x
 if hasattr(CONFIG['model module'], 'get_tf_function'):
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer)
 gen = torch.Generator()
 gen = gen.manual_seed(37)
 
-train_set, val_set, test_set = data.random_split(dset, CONFIG['split'], gen)
+class_lists = [[] for _ in range(CONFIG['classes'])]
 
-if(CONFIG['classes'] > 1):
-    class_lists = [[]]*CONFIG['classes']
+for i in range(0, dset.__len__()):
+    _, label = dset.__getitem__(i)
+    class_lists[label.argmax()].append(dset.files[i])
 
-    for i in range(0, dset.__len__()):
-        _, label = dset.__getitem__(i)
-        class_lists[label.argmax()].append(dset.files[i])
+train_files = []
+val_files = []
+test_files = []
 
-    train_files = []
-    val_files = []
-    test_files = []
+for c in class_lists:
+    Random(37).shuffle(c)
+    splits = np.split(c, (int(len(c)*CONFIG['split'][0]), int(len(c)*CONFIG['split'][0])+int(len(c)*CONFIG['split'][1])))
+    train_files += splits[0].tolist()
+    val_files += splits[1].tolist()
+    test_files += splits[2].tolist()
 
-    for c in class_lists:
-        Random(37).shuffle(c)
-        splits = np.split(c, (int(len(c)*CONFIG['split'][0]), int(len(c)*CONFIG['split'][1])))
-        train_files += splits[0].tolist()
-        val_files += splits[1].tolist()
-        test_files += splits[2].tolist()
-    
-    train_set.files = train_files
-    val_set.files = val_files
-    test_set.files = test_files
+train_set = CONFIG['dataset'](train_files, transformer, augment=True)
+val_set = CONFIG['dataset'](val_files, transformer)
+test_set = CONFIG['dataset'](test_files, transformer)
 
 print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]

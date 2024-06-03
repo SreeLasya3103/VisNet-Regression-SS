@@ -7,7 +7,10 @@ import sqlite3
 
 class Jacobs(Dataset):
     def __init__(self, dataset_dir, transform=lambda x:x):
-        self.files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+        if isinstance(dataset_dir, list):
+            self.files = dataset_dir
+        else: 
+            self.files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
         self.transform = transform
         self.database_path = path.normpath(dataset_dir + '/fog_v1.db')
                 

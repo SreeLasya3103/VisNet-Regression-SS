@@ -12,7 +12,7 @@ from simloss import SimLoss
 
 CONFIG = {
     'model module': models.VisNet,
-    'dimensions': (174,204),
+    'dimensions': (174,174),
     'classes': 15,
     'class names': ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0'),
     'channels': 3,
@@ -32,7 +32,8 @@ CONFIG = {
     'epochs': 80,
     'dataset': datasets.Webcams.Webcams_cls,
     'dataset name': 'Webcams cls blncd',
-    'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams'
+    'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams',
+    'augment': True
 }
 
 

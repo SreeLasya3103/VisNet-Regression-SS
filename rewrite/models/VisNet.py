@@ -127,8 +127,10 @@ def highpass_filter(img, mask_radius=0.2):
     return img
 
 def get_tf_function(dim):
-    def transform(img):
-        img = ip.resize_crop(img, dim)
+    def transform(img, agmnt=False):
+        img = ip.resize_crop(img, dim, agmnt)
+        if agmnt:
+            img = ip.random_augment(img)
         
         pc = torch.from_numpy(PC_CMAP(img[2].unsqueeze(0))).permute((0,3,1,2))
         pc = torch.stack((pc[0][0], pc[0][1], pc[0][2]))
