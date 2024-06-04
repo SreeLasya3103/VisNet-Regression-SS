@@ -38,19 +38,25 @@ class_lists = [[] for _ in range(CONFIG['classes'])]
 for i in range(0, dset.__len__()):
     _, label = dset.__getitem__(i)
     class_lists[label.argmax()].append(dset.files[i])
+    
+for i in range(CONFIG['classes']):
+    Random(37).shuffle(class_lists[i])
 
 train_files = []
 val_files = []
 test_files = []
 
 for c in class_lists:
-    Random(37).shuffle(c)
     splits = np.split(c, (int(len(c)*CONFIG['split'][0]), int(len(c)*CONFIG['split'][0])+int(len(c)*CONFIG['split'][1])))
     train_files += splits[0].tolist()
     val_files += splits[1].tolist()
     test_files += splits[2].tolist()
 
 train_set = CONFIG['dataset'](train_files, transformer, augment=True)
+for i in range(train_set.__len__()):
+    print(train_set.files[i])
+    plt.imshow(train_set.__getitem__(i)[0][0].permute(1,2,0))
+    plt.show()
 val_set = CONFIG['dataset'](val_files, transformer)
 test_set = CONFIG['dataset'](test_files, transformer)
 
