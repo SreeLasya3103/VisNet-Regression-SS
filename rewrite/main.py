@@ -29,7 +29,7 @@ print('Preparing dataset...')
 transformer = lambda x, agmnt: x
 if hasattr(CONFIG['model module'], 'get_tf_function'):
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
-dset = CONFIG['dataset'](CONFIG['dataset path'], transformer)
+dset = CONFIG['dataset'](CONFIG['dataset path'], transformer, **CONFIG['dataset params'])
 gen = torch.Generator()
 gen = gen.manual_seed(37)
 
@@ -55,7 +55,7 @@ for c in class_lists:
 train_set = CONFIG['dataset'](train_files, transformer, augment=True)
 for i in range(train_set.__len__()):
     print(train_set.files[i])
-    plt.imshow(train_set.__getitem__(i)[0][0].permute(1,2,0))
+    plt.imshow(train_set.__getitem__(i)[0][2].permute(1,2,0))
     plt.show()
 val_set = CONFIG['dataset'](val_files, transformer)
 test_set = CONFIG['dataset'](test_files, transformer)

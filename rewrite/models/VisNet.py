@@ -100,26 +100,24 @@ def create_and_save(img_dim, num_classes, num_channels):
     m = torch.jit.script(net)
     m.save('VisNet-' + str(num_channels) + 'x' + str(img_dim[1]) + 'x' + str(img_dim[0]) + '-' + str(num_classes) + '.pt')
 
-def highpass_filter(img, mask_radius=0.2):
-    img = torch.fft.fft2(img)
+def highpass_filter(img, mask_radius=0.1):
+    orig_dim = (img.size(1), img.size(2))
+    img = torch.fft.rfft2(img)
     img = torch.fft.fftshift(img)
     
-    mask = torch.ones(img.size(), dtype=torch.float32)
-    center = ((mask.size(1)-1)/2, (mask.size(2)-1)/2)
+    center = ((img.size(1)-1)/2, (img.size(2)-1)/2)
     
-    for h, row in enumerate(mask[0]):
+    for h, row in enumerate(img[0]):
         for w, p in enumerate(row):
-            h_dist = abs(h-center[0]) / ((mask.size(1)-1)/2)
-            w_dist = abs(w-center[1]) / ((mask.size(2)-1)/2)
+            h_dist = abs(h-center[0]) / ((img.size(1)-1)/2)
+            w_dist = abs(w-center[1]) / ((img.size(2)-1)/2)
             distance = math.sqrt(h_dist**2 + w_dist**2)
             
             if distance < mask_radius:
-                mask[0][h][w] = (distance/mask_radius)**8
-                
-    img = img * mask
+                img[0][h][w] *= (distance/mask_radius)**8
     
     img = torch.fft.ifftshift(img)    
-    img = torch.fft.ifft2(img)
+    img = torch.fft.irfft2(img, orig_dim)
     img = img.type(torch.float32)
     
     img = torch.clamp(img, 0.0, 1.0)
@@ -135,8 +133,10 @@ def get_tf_function(dim):
         pc = torch.from_numpy(PC_CMAP(img[2].unsqueeze(0))).permute((0,3,1,2))
         pc = torch.stack((pc[0][0], pc[0][1], pc[0][2]))
         
-        fft = highpass_filter(img)
-        fft = torch.from_numpy(PC_CMAP(img)).permute((0,3,1,2))
+        fft = img[2].detach().clone()
+        fft = torch.unsqueeze(fft, 0)
+        fft = highpass_filter(fft)
+        fft = torch.from_numpy(PC_CMAP(fft)).permute((0,3,1,2))
         fft = torch.stack((fft[0][0], fft[0][1], fft[0][2]))
         
         stack = torch.stack((img,pc,fft))

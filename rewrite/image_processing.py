@@ -38,7 +38,7 @@ def random_augment(image):
     transform_list = [tf.RandomHorizontalFlip(0.5)]
     sharpness_factor = random.uniform(0.75, 1.25)
     transform_list += [tf.RandomAdjustSharpness(sharpness_factor, 0.5)]
-    transform_list += [tf.ColorJitter(0.25, 0.2, 0.2, 0.1)]
+    transform_list += [tf.ColorJitter(0.2, 0.2, 0.2, 0.15)]
     transform_list += [tf.RandomRotation(10, tf.InterpolationMode.BILINEAR)]
     
     transforms = tf.RandomApply(torch.nn.ModuleList(transform_list), 0.75)
