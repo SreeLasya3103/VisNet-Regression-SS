@@ -53,10 +53,10 @@ for c in class_lists:
     test_files += splits[2].tolist()
 
 train_set = CONFIG['dataset'](train_files, transformer, augment=True)
-for i in range(train_set.__len__()):
-    print(train_set.files[i])
-    plt.imshow(train_set.__getitem__(i)[0][2].permute(1,2,0))
-    plt.show()
+# for i in range(train_set.__len__()):
+#     print(train_set.files[i])
+#     plt.imshow(train_set.__getitem__(i)[0][2].permute(1,2,0))
+#     plt.show()
 val_set = CONFIG['dataset'](val_files, transformer)
 test_set = CONFIG['dataset'](test_files, transformer)
 
