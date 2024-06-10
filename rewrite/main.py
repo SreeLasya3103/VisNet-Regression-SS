@@ -1,3 +1,4 @@
+import keras.src
 import torch
 import torch.utils.data as data
 import torch.nn as nn
@@ -17,6 +18,7 @@ import numpy as np
 from random import Random
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import image_processing as ip
 
 spec = importlib.util.spec_from_file_location("config", os.path.join(os.getcwd(), 'config.py'))
 config = importlib.util.module_from_spec(spec)
@@ -26,7 +28,7 @@ CONFIG = config.CONFIG
 
 
 print('Preparing dataset...')
-transformer = lambda x, agmnt: x
+transformer = lambda x, agmnt: ip.resize_crop(x, CONFIG['dimensions'], agmnt)
 if hasattr(CONFIG['model module'], 'get_tf_function'):
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer, **CONFIG['dataset params'])

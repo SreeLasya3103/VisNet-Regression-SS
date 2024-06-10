@@ -122,6 +122,8 @@ class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
 
+        self.register_buffer('mean', mean)
+        self.register_buffer('std', std)
         self.normalize = tf.Normalize(mean, std)
 
         self.VGG = nn.Sequential(VGG(num_channels), nn.Flatten(), nn.LazyLinear(128))
