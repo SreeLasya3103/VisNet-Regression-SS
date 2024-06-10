@@ -11,7 +11,7 @@ from torch.optim import lr_scheduler as sched
 from simloss import SimLoss
 
 CONFIG = {
-    'model module': models.VisNet,
+    'model module': models.RMEP,
     'dimensions': (200,200),
     'classes': 15,
     'class names': ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0'),
