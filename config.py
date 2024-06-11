@@ -11,16 +11,16 @@ from torch.optim import lr_scheduler as sched
 from simloss import SimLoss
 
 CONFIG = {
-    'model module': models.RMEP,
-    'dimensions': (200,200),
+    'model module': models.VisNet,
+    'dimensions': (260,260),
     'classes': 15,
     'class names': ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0'),
     'channels': 3,
-    'split': (0.75, 0.10, 0.15),
-    'subbatch size': 32,
-    'accum steps': 1, 
+    'split': (0.70, 0.20, 0.10),
+    'subbatch size': 8,
+    'accum steps': 4, 
     'cuda': True,
-    'loss function': nn.CrossEntropyLoss(),
+    'loss function': SimLoss(15, 0.01, 'cuda'),
     'optimizer': torch.optim.Adam,
     'optim params': {
       'lr': 0.00001,
@@ -32,7 +32,7 @@ CONFIG = {
     'epochs': 80,
     'dataset': datasets.Webcams.Webcams_cls,
     'dataset params': {
-      'limits':{5.0:100, 6.0:100, 7.0:100, 8.0:100, 9.0:100, 10.0:100}
+      'limits':{3.0:125, 5.0:125, 6.0:125, 7.0:125, 8.0:125, 9.0:125, 10.0:125}
     },
     'dataset name': 'Webcams cls blncd',
     'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams',

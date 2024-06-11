@@ -5,6 +5,7 @@ from os import path
 import torchvision.io as io
 import torchvision.transforms.functional as f
 from random import Random
+from math import ceil
 
 class Webcams_reg(Dataset):
     def __init__(self, dataset_dir, transform=lambda x, augment:x, augment=False, limits=dict()):
@@ -107,9 +108,12 @@ class Webcams_cls(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 47 top, 19 bottom, 3 left, 3 right
-        dims = (data.size(1)-66, data.size(2)-6)
-        data = f.crop(data, 46, 2, dims[0], dims[1])
+        #Remove 9.58% top, 3.99% bottom, 3 left, 3 right
+        crop_top = ceil(0.0958 * data.size(1))
+        crop_bot = ceil(0.0399 * data.size(1))
+        sub_vert = -crop_top - crop_bot
+        dims = (data.size(1)-sub_vert, data.size(2)-6)
+        data = f.crop(data, crop_top, 2, dims[0], dims[1])
         data = self.transform(data, self.augment)
         data = data.float()
         
