@@ -111,7 +111,7 @@ class Webcams_cls(Dataset):
         #Remove 9.58% top, 3.99% bottom, 3 left, 3 right
         crop_top = ceil(0.0958 * data.size(1))
         crop_bot = ceil(0.0399 * data.size(1))
-        sub_vert = -crop_top - crop_bot
+        sub_vert = crop_top + crop_bot
         dims = (data.size(1)-sub_vert, data.size(2)-6)
         data = f.crop(data, crop_top, 2, dims[0], dims[1])
         data = self.transform(data, self.augment)

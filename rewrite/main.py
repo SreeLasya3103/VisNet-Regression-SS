@@ -18,6 +18,7 @@ from random import Random
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import image_processing as ip
+from torchvision.utils import save_image
 
 spec = importlib.util.spec_from_file_location("config", os.path.join(os.getcwd(), 'config.py'))
 config = importlib.util.module_from_spec(spec)
@@ -53,11 +54,17 @@ for c in class_lists:
     val_files += splits[1].tolist()
     test_files += splits[2].tolist()
 
-train_set = CONFIG['dataset'](train_files, transformer, augment=True)
+train_set = CONFIG['dataset'](train_files, transformer, augment=CONFIG['augment'])
+
+# class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')
 # for i in range(train_set.__len__()):
 #     print(train_set.files[i])
-#     plt.imshow(train_set.__getitem__(i)[0][2].permute(1,2,0))
+#     data, label = train_set.__getitem__(i)
+#     three = torch.cat((data[0], data[1], data[2]), 1)
+#     # save_image(three, '/home/feet/Pictures/INPUT_COMPS/' + class_names[torch.argmax(label)] + '-' + str(i) + '.png')
+#     plt.imshow(three.permute(1,2,0))
 #     plt.show()
+    
 val_set = CONFIG['dataset'](val_files, transformer)
 test_set = CONFIG['dataset'](test_files, transformer)
 

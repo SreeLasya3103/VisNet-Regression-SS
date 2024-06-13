@@ -36,7 +36,7 @@ CONFIG = {
     },
     'dataset name': 'Webcams cls blncd',
     'dataset path': '/home/feet/Documents/LAWN/datasets/Webcams',
-    'augment': True
+    'augment': False
 }
 
 
