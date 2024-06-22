@@ -109,8 +109,7 @@ def create_and_save(img_dim, num_classes, num_channels):
 @functools.cache
 def highpass_mask(mask_radius, dim):
     mask = torch.ones(dim, dtype=torch.float32)
-    mask_radius = np.multiply(dim, mask_radius) 
-    # (math.ceil(dim[0]*mask_radius), math.ceil(dim[1]*mask_radius))
+    mask_radius = np.multiply(dim, mask_radius)
     center = ((dim[0]-1)/2, (dim[1]-1)/2)
     center_tl = np.subtract(np.floor(center), mask_radius).astype(int)
     center_br = np.add(np.ceil(center), mask_radius).astype(int)

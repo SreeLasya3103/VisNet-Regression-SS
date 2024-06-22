@@ -32,8 +32,8 @@ transformer = lambda x, agmnt: ip.resize_crop(x, CONFIG['dimensions'], agmnt)
 if hasattr(CONFIG['model module'], 'get_tf_function'):
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer, **CONFIG['dataset params'])
-gen = torch.Generator()
-gen = gen.manual_seed(37)
+# gen = torch.Generator()
+# gen = gen.manual_seed(37)
 
 class_lists = [[] for _ in range(CONFIG['classes'])]
 
@@ -42,18 +42,22 @@ for i in range(0, dset.__len__()):
     class_lists[label.argmax()].append(dset.files[i])
     
 for i in range(CONFIG['classes']):
-    Random(37).shuffle(class_lists[i])
+    Random(38).shuffle(class_lists[i])
 
 train_files = []
 val_files = []
 test_files = []
 
-for c in class_lists:
+for i, c in enumerate(class_lists):
     splits = np.split(c, (int(len(c)*CONFIG['split'][0]), int(len(c)*CONFIG['split'][0])+int(len(c)*CONFIG['split'][1])))
+    if CONFIG['balance batches']:
+        class_lists[i] = splits[0].tolist()
     train_files += splits[0].tolist()
     val_files += splits[1].tolist()
     test_files += splits[2].tolist()
 
+if CONFIG['balance batches']:
+    train_set_bb = [CONFIG['dataset'](c, transformer, augment=CONFIG['augment']) for c in class_lists]
 train_set = CONFIG['dataset'](train_files, transformer, augment=CONFIG['augment'])
 
 # class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')
@@ -72,7 +76,7 @@ print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]
 mean = torch.zeros(sample.size(), dtype=torch.float32)
 
-train_loader = DataLoader(train_set, 64, False)
+train_loader = DataLoader(train_set, 32, False, num_workers=4)
 
 bar = Bar()
 bar.max = len(train_loader)
@@ -94,7 +98,6 @@ for i, (data, labels) in enumerate(train_loader):
 std = torch.sqrt(square_dif).apply_(lambda x: 1.0 if x == 0.0 else x)
 
 # std = torch.ones(sample.size(), dtype=torch.float32)
-
 
 model = CONFIG['model module'].Model(CONFIG['classes'], CONFIG['channels'], mean, std)
 
@@ -123,6 +126,9 @@ params = {
 }
 
 if CONFIG['classes'] > 1:
-    tv.train_cls(train_set, val_set, test_set, model, params)
+    if CONFIG['balance batches']:
+        tv.train_cls_bb(train_set_bb, val_set, test_set, model, params)
+    else:
+        tv.train_cls(train_set, val_set, test_set, model, params)
 elif CONFIG['classes'] == 1:
     tv.train_reg(train_set, val_set, test_set, model, params)
