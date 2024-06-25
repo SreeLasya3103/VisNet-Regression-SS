@@ -49,11 +49,14 @@ class Webcams_reg(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 47 top, 19 bottom, 3 left, 3 right
-        dims = (data.size(1)-66, data.size(2)-6)
-        data = f.crop(data, 46, 2, dims[0], dims[1])
+        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+        crop_top = ceil(0.1281 * data.size(1))
+        crop_bot = 3
+        sub_vert = crop_top + crop_bot
+        dims = (data.size(1)-sub_vert, data.size(2)-6)
+        data = f.crop(data, crop_top, 2, dims[0], dims[1])
         data = self.transform(data, self.augment)
-        data = data.to(torch.float32)
+        data = data.float()
         
         string_value = path.basename(img_path)
         string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
@@ -108,9 +111,9 @@ class Webcams_cls(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 9.58% top, 3.99% bottom, 3 left, 3 right
-        crop_top = ceil(0.0958 * data.size(1))
-        crop_bot = ceil(0.0399 * data.size(1))
+        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+        crop_top = ceil(0.1281 * data.size(1))
+        crop_bot = 3
         sub_vert = crop_top + crop_bot
         dims = (data.size(1)-sub_vert, data.size(2)-6)
         data = f.crop(data, crop_top, 2, dims[0], dims[1])
@@ -212,9 +215,9 @@ class Webcams_cls_10(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 9.58% top, 3.99% bottom, 3 left, 3 right
-        crop_top = ceil(0.0958 * data.size(1))
-        crop_bot = ceil(0.0399 * data.size(1))
+        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+        crop_top = ceil(0.1281 * data.size(1))
+        crop_bot = 3
         sub_vert = crop_top + crop_bot
         dims = (data.size(1)-sub_vert, data.size(2)-6)
         data = f.crop(data, crop_top, 2, dims[0], dims[1])
@@ -307,9 +310,9 @@ class Webcams_cls_3(Dataset):
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
-        #Remove 9.58% top, 3.99% bottom, 3 left, 3 right
-        crop_top = ceil(0.0958 * data.size(1))
-        crop_bot = ceil(0.0399 * data.size(1))
+        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+        crop_top = ceil(0.1281 * data.size(1))
+        crop_bot = 3
         sub_vert = crop_top + crop_bot
         dims = (data.size(1)-sub_vert, data.size(2)-6)
         data = f.crop(data, crop_top, 2, dims[0], dims[1])

@@ -150,6 +150,7 @@ def get_tf_function(dim):
         img = img.repeat(3, 1, 1, 1)
         
         img[1] = torch.from_numpy(PC_CMAP(img[1][2])).permute((2,0,1))[:3,:,:]
+        # img[1] = torch.zeros(img[0].shape, dtype=torch.float32)
         
         img[2][2] = highpass_filter(img[2][2])
         img[2] = torch.from_numpy(PC_CMAP(img[2][2])).permute((2,0,1))[:3,:,:]
