@@ -7,6 +7,7 @@ import math
 import torchvision.transforms as tf
 import functools
 import numpy as np
+import matplotlib.pyplot as plt
 
 PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#3F003F', '#7E007E',
                                                                    '#4300BD', '#0300FD', '#003F82',
@@ -127,7 +128,11 @@ def highpass_mask(mask_radius, dim):
 
 def highpass_filter(img, mask_radius=0.1):
     orig_dim = (img.size(0), img.size(1))
-    fft = torch.fft.rfft2(img)
+    # fft = torch.fft.rfft2(img)
+    fft = torch.fft.fft2(img)
+    # fft = torch.stack((fft.real, fft.imag, torch.zeros((orig_dim))))
+    # print(img.shape)
+    # input("AEEEAEAE")
     fft = torch.fft.fftshift(fft)
 
     mask = highpass_mask(mask_radius, fft.shape)
@@ -135,12 +140,35 @@ def highpass_filter(img, mask_radius=0.1):
     fft = fft*mask
     
     fft = torch.fft.ifftshift(fft)    
-    fft = torch.fft.irfft2(fft, orig_dim)
+    fft = torch.fft.ifft2(fft, orig_dim)
     fft = fft.type(torch.float32)
+    
     
     fft = torch.clamp(fft, 0.0, 1.0)
     
     return fft
+
+def satmap(orig):
+    img = orig.permute(1,2,0).contiguous()
+    
+    for h in range(img.shape[0]):
+        for w in range(img.shape[1]):
+            mx = mn = img[h][w][0]
+            if img[h][w][1] > mx:
+                mx = img[h][w][1]
+            elif img[h][w][1] < mn:
+                mn = img[h][w][1]
+            
+            if img[h][w][2] > mx:
+                mx = img[h][w][2]
+            elif img[h][w][2] < mn:
+                mn = img[h][w][2]
+            
+            orig[2][h][w] = 0.0
+            if mx != 0.0:
+                orig[2][h][w] = 1.0 - mn
+    
+    return orig
 
 def get_tf_function(dim):
     def transform(img, agmnt=False):
@@ -150,10 +178,16 @@ def get_tf_function(dim):
         img = img.repeat(3, 1, 1, 1)
         
         img[1] = torch.from_numpy(PC_CMAP(img[1][2])).permute((2,0,1))[:3,:,:]
+        # img[0] = torch.zeros((3, *dim))
+        # img[1] = torch.zeros((3, *dim))
+        # img[1] = torch.from_numpy(PC_CMAP(satmap(img[1])[2])).permute((2,0,1))[:3,:,:]
+        # plt.imshow(img[1].permute(1,2,0))
+        # plt.show()
         # img[1] = torch.zeros(img[0].shape, dtype=torch.float32)
         
-        img[2][2] = highpass_filter(img[2][2])
+        img[2][2] = highpass_filter(img[2][2], 0.05)
         img[2] = torch.from_numpy(PC_CMAP(img[2][2])).permute((2,0,1))[:3,:,:]
+        # img[2] = highpass_filter(img[2][2], 0.05)
         
         return img
     

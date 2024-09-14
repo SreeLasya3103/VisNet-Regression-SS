@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-import datasets
-import datasets.Webcams
+import dsets
+import dsets.Webcams
 from torch.utils.data import Dataset, DataLoader
 import os
 from datetime import datetime
@@ -76,15 +76,40 @@ for info in info_list:
         vis_difsites_counts[info[2]] += 1
         vis_difsites[info[2]].add(info[0])
         
+site_or_counts = dict()
+difvis_counts = dict()
+difviss = dict()
+for info in info_list:
+    if (info[0], info[1]) not in site_or_counts:
+        site_or_counts[(info[0], info[1])] = 0
+        difvis_counts[(info[0], info[1])] = 1
+        difviss[(info[0], info[1])] = set()
+        difviss[(info[0], info[1])].add(info[2])
+    else:
+        site_or_counts[(info[0], info[1])] += 1
+        if info[2] not in difviss[(info[0], info[1])]:
+            difvis_counts[(info[0], info[1])] += 1
+            difviss[(info[0], info[1])].add(info[2])
         
-print('Number of sites:', len(site_counts))
+        
+# print('Number of sites:', len(site_counts))
 # print('Images per site:')
 # pprint.pprint(site_counts)
 # print('\nVis classes of each site:')
 # pprint.pprint(site_vis_counts)
-print('\nNumber of different sites for each vis class:')
-pprint.pprint(vis_difsites_counts)
+# print('\nNumber of different sites for each vis class:')
+# pprint.pprint(vis_difsites_counts)
+difvis_counts = sorted(difvis_counts.items(), key=lambda x:x[1])
+pprint.pprint(difvis_counts)
     
 
 
 # 1.0: 135, 2.0: 200, 3.0: 263, 4.0: 254, 5.0: 313, 6.0: 382, 7.0: 450, 8.0: 407, 9.0: 7648, 10.0: 2193
+# SITE41_ORNT335
+# SITE41_ORNT25
+# SITE41_ORNT235 !!!!!!!!!!!!!!!!!!!!!!!!
+# SITE41_ORNT170
+
+# SITE203_ORNT220
+# SITE203_ORNT70
+# SITE203_ORNT155

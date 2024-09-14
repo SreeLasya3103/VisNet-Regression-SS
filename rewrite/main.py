@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import LRScheduler
 import torch.nn.functional as f
 from torcheval.metrics.functional import r2_score
 import train_val as tv
-import datasets as datasets
+import dsets as dsets
 import models as models
 from progress.bar import Bar
 import os
@@ -28,28 +28,30 @@ CONFIG = config.CONFIG
 
 
 print('Preparing dataset...')
-transformer = lambda x, agmnt: ip.resize_crop(x, CONFIG['dimensions'], agmnt)
-if hasattr(CONFIG['model module'], 'get_tf_function'):
+transformer = lambda x, agmnt: ip.resize_crop(x, CONFIG['dimensions'], agmnt)   #Function that processes images for use in a model
+if hasattr(CONFIG['model module'], 'get_tf_function'):  #Use model's custom transformer if it has one 
     transformer = CONFIG['model module'].get_tf_function(CONFIG['dimensions'])
+    
+#Create dataset using all images    
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer, **CONFIG['dataset params'])
 # gen = torch.Generator()
 # gen = gen.manual_seed(37)
 
+#Create class lists for sorting out the images 
 class_lists = [[] for _ in range(CONFIG['classes'])]
 
 for i in range(0, dset.__len__()):
-    _, label = dset.__getitem__(i)
-    class_lists[label.argmax()].append(dset.files[i])
-    
-for i in range(CONFIG['classes']):
-    Random(38).shuffle(class_lists[i])
+    class_idx = dset.labels[i].argmax()
+    class_lists[class_idx].append(dset.files[i])
 
 train_files = []
 val_files = []
 test_files = []
 
 for i, c in enumerate(class_lists):
-    splits = np.split(c, (int(len(c)*CONFIG['split'][0]), int(len(c)*CONFIG['split'][0])+int(len(c)*CONFIG['split'][1])))
+    train_point = CONFIG['split'][0] * len(c)
+    val_point = CONFIG['split'][1] * len(c) + train_point
+    splits = np.split(c, (int(train_point), int(val_point)))
     if CONFIG['balance batches']:
         class_lists[i] = splits[0].tolist()
     train_files += splits[0].tolist()
@@ -59,6 +61,9 @@ for i, c in enumerate(class_lists):
 if CONFIG['balance batches']:
     train_set_bb = [CONFIG['dataset'](c, transformer, augment=CONFIG['augment']) for c in class_lists]
 train_set = CONFIG['dataset'](train_files, transformer, augment=CONFIG['augment'])
+    
+val_set = CONFIG['dataset'](val_files, transformer)
+test_set = CONFIG['dataset'](test_files, transformer)
 
 # class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')
 # for i in range(train_set.__len__()):
@@ -68,9 +73,6 @@ train_set = CONFIG['dataset'](train_files, transformer, augment=CONFIG['augment'
 #     # save_image(three, '/home/feet/Pictures/INPUT_COMPS/' + class_names[torch.argmax(label)] + '-' + str(i) + '.png')
 #     plt.imshow(three.permute(1,2,0))
 #     plt.show()
-    
-val_set = CONFIG['dataset'](val_files, transformer)
-test_set = CONFIG['dataset'](test_files, transformer)
 
 print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]

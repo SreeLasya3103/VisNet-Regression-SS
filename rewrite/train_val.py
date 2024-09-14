@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import pandas as pd
 from itertools import cycle
+from torchvision.utils import save_image
+import os
 
 def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
@@ -85,10 +87,10 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
             for i, guess in enumerate(output):
                 if step == 0:
-                    pred_indices = torch.Tensor([guess.argmax().detach()])
+                    pred_indices = torch.Tensor([guess.argmax()])
                     targ_indices = torch.Tensor([labels[i].argmax()])
                 else:
-                    pred_indices = torch.cat((pred_indices, torch.Tensor([guess.argmax().detach()])))
+                    pred_indices = torch.cat((pred_indices, torch.Tensor([guess.argmax()])))
                     targ_indices = torch.cat((targ_indices, torch.Tensor([labels[i].argmax()])))
                 if guess.argmax() == labels[i].argmax():
                     correct += 1
@@ -111,7 +113,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_figure('ConfMat/train', plt.gcf(), epoch+1)
 
         print('Validating...')
-        val_loss, val_accuracy, val_conf_mat = val_cls(val_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
+        val_loss, val_accuracy, val_conf_mat, rlywrng = val_cls(val_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
 
         print('\nValidation loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
@@ -127,6 +129,20 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         if val_loss > best_loss:
             best_loss = val_loss
             torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
+            
+            # os.system('rm ./rlywrng/*')
+            
+            # zero_count = 0
+            # two_count = 0
+            # for img, label in rlywrng:
+            #     if label == 0:
+            #         count = zero_count
+            #         zero_count += 1
+            #     else:
+            #         count = two_count
+            #         two_count += 1
+                
+            #     save_image(img, './rlywrng/VIS' + str(label) + '_' + str(count) + '.png')
 
         writer.add_scalar('Loss/train', train_loss, epoch+1)
         writer.add_scalar('Acc/train', train_accuracy, epoch+1)
@@ -134,7 +150,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         writer.add_scalar('Acc/val', val_accuracy, epoch+1)
         if test_set.__len__() > 0:
             print('Testing...')
-            test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
+            test_loss, test_accuracy, test_conf_mat, rlywrng = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
+            del rlywrng
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
@@ -169,6 +186,8 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
         
         pred_indices = None
         targ_indices = None
+        
+        rlywrng = list()
 
         for step, (data, labels) in enumerate(val_loader):
             if use_cuda:
@@ -183,13 +202,15 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
 
             for i, guess in enumerate(output):
                 if step == 0:
-                    pred_indices = torch.Tensor([guess.argmax().detach()])
+                    pred_indices = torch.Tensor([guess.argmax()])
                     targ_indices = torch.Tensor([labels[i].argmax()])
                 else:
-                    pred_indices = torch.cat((pred_indices, torch.Tensor([guess.argmax().detach()])))
+                    pred_indices = torch.cat((pred_indices, torch.Tensor([guess.argmax()])))
                     targ_indices = torch.cat((targ_indices, torch.Tensor([labels[i].argmax()])))
                 if guess.argmax() == labels[i].argmax():
                     correct += 1
+                elif abs(guess.argmax().item() - labels[i].argmax().item()) == 2:
+                    rlywrng += [(data[i].detach().clone(), labels[i].argmax().item())]
 
             bar.next()
 
@@ -198,7 +219,7 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
         
         val_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
 
-        return val_loss, val_accuracy, val_conf_mat
+        return val_loss, val_accuracy, val_conf_mat, rlywrng
 
 def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
@@ -683,6 +704,144 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         if test_set.__len__() > 0:
             print('Testing...')
             test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size*num_classes, accum_steps, model, use_cuda, loss_fn, num_classes)
+            
+            tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
+            plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
+            plot.set_xlabel('Predicted Value')
+            plot.set_ylabel('True Value')
+            writer.add_figure('ConfMat/test', plt.gcf(), epoch+1)
+            
+            writer.add_scalar('Loss/test', test_loss, epoch+1)
+            writer.add_scalar('Acc/test', test_accuracy, epoch+1)
+        writer.flush()
+
+        if scheduler:
+            scheduler.step()
+
+    writer.close()
+    
+def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
+    writer = SummaryWriter()
+    sn.set_theme(font_scale=0.4)
+
+    subbatch_size = params['subbatch_size']
+    accum_steps = params['accum_steps']
+    batch_size = accum_steps * subbatch_size
+    use_cuda = params['use_cuda']
+    loss_fn = params['loss_fn']
+    scheduler = params['scheduler']
+    optimizer = params['optimizer']
+    epochs = params['epochs']
+    num_classes = params['num_classes']
+    class_names = params['class_names']
+    num_channels = params['num_channels']
+    learning_rate = params['learning_rate']
+    image_dim = params['image_dim']
+
+    hparams = {
+        'model': params['model_name'],
+        'dataset': params['dset_name'],
+        'split': str(params['split']),
+        'loss function': loss_fn.__class__.__name__,
+        'learning rate': str(learning_rate),
+        'optimizer': optimizer.__class__.__name__,
+        'scheduler': scheduler.__class__.__name__,
+        'batch size': str(batch_size),
+        'epochs': str(epochs),
+        'classes': str(num_classes),
+        'channels': str(num_channels),
+        'image dimensions': str(image_dim)
+    }
+
+    writer.add_hparams(hparams, {})
+    
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
+
+    if use_cuda:
+        model.cuda()
+
+    best_loss = float('-inf')
+
+    for epoch in range(epochs):
+        print('\nEpoch ' + str(epoch+1))
+        print('Training...')
+
+        model.train()
+
+        bar = Bar()
+        bar.max = len(train_loader)
+
+        correct = 0
+        total = 0
+        running_loss = 0.0
+
+        pred_indices = None
+        targ_indices = None
+        
+        for step, (data, labels) in enumerate(train_loader):
+            if use_cuda:
+                data = data.cuda()
+                labels = labels.cuda()
+
+            total += labels.size(0)
+
+            output = model(data)
+            loss = loss_fn(output, labels)
+            loss.backward()
+            running_loss += labels.size(0) * loss.item()
+
+            for i, guess in enumerate(output):
+                if step == 0:
+                    pred_indices = torch.Tensor([guess.argmax().detach()])
+                    targ_indices = torch.Tensor([labels[i].argmax()])
+                else:
+                    pred_indices = torch.cat((pred_indices, torch.Tensor([guess.argmax().detach()])))
+                    targ_indices = torch.cat((targ_indices, torch.Tensor([labels[i].argmax()])))
+                if guess.argmax() == labels[i].argmax():
+                    correct += 1
+
+            if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+            bar.next()
+
+        train_loss = running_loss/total
+        train_accuracy = correct/total
+        print('\nTraining loss: ' + str(train_loss))
+        print('Training accuracy: ' + str(train_accuracy))
+        
+        train_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
+        tcm = pd.DataFrame(train_conf_mat, index=class_names, columns=class_names)
+        plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
+        plot.set_xlabel('Predicted Value')
+        plot.set_ylabel('True Value')
+        writer.add_figure('ConfMat/train', plt.gcf(), epoch+1)
+
+        print('Validating...')
+        val_loss, val_accuracy, val_conf_mat = val_cls(val_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
+
+        print('\nValidation loss: ' + str(val_loss))
+        print('Validation accuracy: ' + str(val_accuracy))
+
+        vcm = pd.DataFrame(val_conf_mat, index=class_names, columns=class_names)
+        plot = sn.heatmap(vcm, annot=True, vmin=0.0, vmax=1.0)
+        plot.set_xlabel('Predicted Value')
+        plot.set_ylabel('True Value')
+        writer.add_figure('ConfMat/val', plt.gcf(), epoch+1)
+
+        torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
+
+        if val_loss > best_loss:
+            best_loss = val_loss
+            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
+
+        writer.add_scalar('Loss/train', train_loss, epoch+1)
+        writer.add_scalar('Acc/train', train_accuracy, epoch+1)
+        writer.add_scalar('Loss/val', val_loss, epoch+1)
+        writer.add_scalar('Acc/val', val_accuracy, epoch+1)
+        if test_set.__len__() > 0:
+            print('Testing...')
+            test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)

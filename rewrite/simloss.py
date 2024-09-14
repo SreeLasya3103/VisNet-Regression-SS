@@ -38,7 +38,6 @@ class SimLoss(torch.nn.Module):
         for j in range(number_of_classes):
             for i in range(number_of_classes):
                 w[j, i] = reduction_factor ** np.abs(i - j)
-                # w[j, i] = (reduction_factor ** (np.abs(i-j))) * ((j+1)/10)
         
         return w
 
