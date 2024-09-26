@@ -26,7 +26,6 @@ sys.modules["config"] = config
 spec.loader.exec_module(config)
 CONFIG = config.CONFIG
 
-
 print('Preparing dataset...')
 transformer = lambda x, agmnt: ip.resize_crop(x, CONFIG['dimensions'], agmnt)   #Function that processes images for use in a model
 if hasattr(CONFIG['model module'], 'get_tf_function'):  #Use model's custom transformer if it has one 
@@ -34,8 +33,6 @@ if hasattr(CONFIG['model module'], 'get_tf_function'):  #Use model's custom tran
     
 #Create dataset using all images    
 dset = CONFIG['dataset'](CONFIG['dataset path'], transformer, **CONFIG['dataset params'])
-# gen = torch.Generator()
-# gen = gen.manual_seed(37)
 
 #Create class lists for sorting out the images 
 class_lists = [[] for _ in range(CONFIG['classes'])]
@@ -64,15 +61,6 @@ train_set = CONFIG['dataset'](train_files, transformer, augment=CONFIG['augment'
     
 val_set = CONFIG['dataset'](val_files, transformer)
 test_set = CONFIG['dataset'](test_files, transformer)
-
-# class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')
-# for i in range(train_set.__len__()):
-#     print(train_set.files[i])
-#     data, label = train_set.__getitem__(i)
-#     three = torch.cat((data[0], data[1], data[2]), 1)
-#     # save_image(three, '/home/feet/Pictures/INPUT_COMPS/' + class_names[torch.argmax(label)] + '-' + str(i) + '.png')
-#     plt.imshow(three.permute(1,2,0))
-#     plt.show()
 
 print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]
