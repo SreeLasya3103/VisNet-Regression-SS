@@ -15,6 +15,21 @@ PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#
                                                                    '#FF7F00', '#FF0500'])
 matplotlib.colors.LinearSegmentedColormap
 
+class KAN(nn.Module):
+    def __init__(self, input_size, inner_size, out_size):
+        super(KAN, self).__init__()
+
+        self.inner_weights = nn.Linear(input_size, inner_size)
+        self.outer_weights = nn.Linear(inner_size, out_size)
+        self.phi = nn.Tanh()
+
+    def forward(self, x):
+        z = self.inner_weights(x)
+        v = self.phi(z)
+        y = self.outer_weights(v)
+
+        return y
+
 class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
@@ -47,8 +62,11 @@ class Model(nn.Module):
                           nn.LazyLinear(2048),
                           nn.Dropout(0.4)]
         
+        # linear = [nn.Linear(3072, 4096),
+        #           nn.Linear(4096, num_classes)]
+
         linear = [nn.Linear(3072, 4096),
-                  nn.Linear(4096, num_classes)]
+                  KAN(4096, 32, num_classes)]
         
         self.fft_1 = nn.Sequential(*conv_1())
         self.fft_2 = nn.Sequential(*conv_2())

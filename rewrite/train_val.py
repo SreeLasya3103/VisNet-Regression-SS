@@ -14,6 +14,7 @@ import pandas as pd
 from itertools import cycle
 from torchvision.utils import save_image
 import os
+import csv
 
 def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn.Module, params):
     writer = SummaryWriter()
@@ -55,7 +56,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     if use_cuda:
         model.cuda()
 
-    best_loss = float('-inf')
+    best_loss = float('inf')
 
     for epoch in range(epochs):
         print('\nEpoch ' + str(epoch+1))
@@ -97,7 +98,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
+                optimizer.zero_grad()
             bar.next()
 
         train_loss = running_loss/total
@@ -107,6 +108,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         
         train_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
         tcm = pd.DataFrame(train_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -118,7 +120,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
         print('\nValidation loss: ' + str(val_loss))
         print('Validation accuracy: ' + str(val_accuracy))
 
-        vcm = pd.DataFrame(val_conf_mat, index=class_names, columns=class_names)
+        vcm = pd.DataFrame(val_conf_mat[0], index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(vcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -126,9 +129,15 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
         torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
 
-        if val_loss > best_loss:
+        if val_loss < best_loss:
             best_loss = val_loss
             torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
+            
+            
+            t_np = val_conf_mat[1].numpy() #convert to Numpy array
+            df = pd.DataFrame(t_np) #convert to a dataframe
+            df.to_csv(path.normpath(writer.get_logdir()+'/best-predictions.csv'),index=False) #save to file
+
             
             # os.system('rm ./rlywrng/*')
             
@@ -143,6 +152,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             #         two_count += 1
                 
             #     save_image(img, './rlywrng/VIS' + str(label) + '_' + str(count) + '.png')
+            
+            
 
         writer.add_scalar('Loss/train', train_loss, epoch+1)
         writer.add_scalar('Acc/train', train_accuracy, epoch+1)
@@ -153,7 +164,8 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
             test_loss, test_accuracy, test_conf_mat, rlywrng = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
             del rlywrng
             
-            tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
+            tcm = pd.DataFrame(test_conf_mat[0], index=class_names, columns=class_names)
+            plt.figure(dpi = 600)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
             plot.set_xlabel('Predicted Value')
             plot.set_ylabel('True Value')
@@ -217,7 +229,7 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
         val_loss = running_loss/total
         val_accuracy = correct/total
         
-        val_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
+        val_conf_mat = (multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true'), multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes))
 
         return val_loss, val_accuracy, val_conf_mat, rlywrng
 
@@ -302,7 +314,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
+                optimizer.zero_grad()
 
             bar.next()
 
@@ -502,7 +514,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
+                optimizer.zero_grad()
             bar.next()
 
         train_loss = running_loss/total
@@ -512,6 +524,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
         
         train_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
         tcm = pd.DataFrame(train_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -524,6 +537,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
         print('Validation accuracy: ' + str(val_accuracy))
 
         vcm = pd.DataFrame(val_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(vcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -544,6 +558,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
             test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size*num_classes, accum_steps, model, use_cuda, loss_fn, num_classes)
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
+            plt.figure(dpi = 600)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
             plot.set_xlabel('Predicted Value')
             plot.set_ylabel('True Value')
@@ -664,7 +679,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
+                optimizer.zero_grad()
             bar.next()
 
         train_loss = running_loss/total
@@ -674,6 +689,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         
         train_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
         tcm = pd.DataFrame(train_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -686,6 +702,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         print('Validation accuracy: ' + str(val_accuracy))
 
         vcm = pd.DataFrame(val_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(vcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -706,6 +723,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
             test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size*num_classes, accum_steps, model, use_cuda, loss_fn, num_classes)
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
+            plt.figure(dpi = 600)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
             plot.set_xlabel('Predicted Value')
             plot.set_ylabel('True Value')
@@ -802,7 +820,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
 
             if (step+1) % accum_steps == 0 or (step+1) == len(train_loader):
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
+                optimizer.zero_grad()
             bar.next()
 
         train_loss = running_loss/total
@@ -812,6 +830,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         
         train_conf_mat = multiclass_confusion_matrix(pred_indices.to(torch.int64), targ_indices.to(torch.int64), num_classes, normalize='true')
         tcm = pd.DataFrame(train_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -824,6 +843,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         print('Validation accuracy: ' + str(val_accuracy))
 
         vcm = pd.DataFrame(val_conf_mat, index=class_names, columns=class_names)
+        plt.figure(dpi = 600)
         plot = sn.heatmap(vcm, annot=True, vmin=0.0, vmax=1.0)
         plot.set_xlabel('Predicted Value')
         plot.set_ylabel('True Value')
@@ -844,6 +864,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
             test_loss, test_accuracy, test_conf_mat = val_cls(test_set, subbatch_size, accum_steps, model, use_cuda, loss_fn, num_classes)
             
             tcm = pd.DataFrame(test_conf_mat, index=class_names, columns=class_names)
+            plt.figure(dpi = 600)
             plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
             plot.set_xlabel('Predicted Value')
             plot.set_ylabel('True Value')
