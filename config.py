@@ -39,7 +39,7 @@ CONFIG = {
 
     },
     # number of epochs to train for
-    'epochs': 30,
+    'epochs': 80,
     # dataset class. NOT an instance
     'dataset': Webcams.Webcams_cls_10,
     # parameters for constructing the dataset. Dependent on what dataset is being used.
