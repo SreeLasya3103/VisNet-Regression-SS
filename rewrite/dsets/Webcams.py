@@ -240,7 +240,7 @@ class Webcams_cls_10(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             
-        img_path = self.files[idx]
+        img_path =  self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
         #Remove 12.81% top, 3 bottom, 3 left, 3 right

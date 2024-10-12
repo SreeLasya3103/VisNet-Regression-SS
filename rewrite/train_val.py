@@ -24,7 +24,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     accum_steps = params['accum_steps']
     batch_size = accum_steps * subbatch_size
     use_cuda = params['use_cuda']
-    loss_fn = params['loss_fn']
+    loss_fn = params['loss_fn'] # i will pass the nn.KLDivLoss() here
     scheduler = params['scheduler']
     optimizer = params['optimizer']
     epochs = params['epochs']
@@ -51,7 +51,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
     
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -81,12 +81,24 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
             total += labels.size(0)
 
+            # Forward Pass
             output = model(data)
+            
+            # Applying log_softmax to the output (for klDivloss)
+            output = torch.log_softmax(output, dim=1)
+            
+            # converting the labels to one-hot encoding (for KLDivloss)
+            #  one_hot_labels = torch.nn.functional.one_hot(labels, num_classes=num_classes).float()
+
+             # Compute the KLDivLoss
             loss = loss_fn(output, labels)
+            
             loss.backward()
             running_loss += labels.size(0) * loss.item()
 
             for i, guess in enumerate(output):
+                #predicted_class = guess.argmax()
+                #true_class = labels[i]
                 if step == 0:
                     pred_indices = torch.Tensor([guess.argmax()])
                     targ_indices = torch.Tensor([labels[i].argmax()])
@@ -181,7 +193,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     writer.close()
 
 def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_classes):
-    val_loader = DataLoader(dataset, batch_size, True, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(dataset, batch_size, True, num_workers=0, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -207,12 +219,23 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
                 labels = labels.cuda()
 
             total += labels.size(0)
-
+            
+            # Forward pass
             output = model(data)
+            
+            # Applying the log_softmax to the output
+            output = torch.log_softmax(output, dim=1)
+            
+            # Convert labels to one-hot encoding (for KLDivLoss)
+            # one_hot_labels = torch.nn.functional.one_hot(labels, num_classes= num_classes).float()
+            
+            # Compute the KLDivLoss
             loss = loss_fn(output, labels)
             running_loss += labels.size(0) * loss.item()
 
             for i, guess in enumerate(output):
+               # predicted_class = guess.argmax()  # Get predicted class index
+               # true_class = labels[i]  # Use the actual class label (not one-hot)
                 if step == 0:
                     pred_indices = torch.Tensor([guess.argmax()])
                     targ_indices = torch.Tensor([labels[i].argmax()])
@@ -266,7 +289,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
 
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -364,7 +387,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     writer.close()
 
 def val_reg(dataset, batch_size, accum_steps, model, use_cuda, loss_fn):
-    val_loader = DataLoader(dataset, batch_size, True, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(dataset, batch_size, True, num_workers=0, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -456,7 +479,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
         if train_set[i].__len__() > train_set[largest_set].__len__():
             largest_set = i
     
-    train_loader = DataLoader(train_set[largest_set], subbatch_size, True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set[largest_set], subbatch_size, True, num_workers=0, pin_memory=True)
     
     if use_cuda:
         model.cuda()
@@ -615,7 +638,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         if train_set[i].__len__() < train_set[smallest_set].__len__():
             smallest_set = i
     
-    train_loader = DataLoader(train_set[smallest_set], subbatch_size, True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set[smallest_set], subbatch_size, True, num_workers=0, pin_memory=True)
     
     if use_cuda:
         model.cuda()
@@ -773,7 +796,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
 
     writer.add_hparams(hparams, {})
     
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
 
     if use_cuda:
         model.cuda()
