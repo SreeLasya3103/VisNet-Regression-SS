@@ -226,16 +226,11 @@ def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_clas
             # Applying the log_softmax to the output
             output = torch.log_softmax(output, dim=1)
             
-            # Convert labels to one-hot encoding (for KLDivLoss)
-            # one_hot_labels = torch.nn.functional.one_hot(labels, num_classes= num_classes).float()
-            
             # Compute the KLDivLoss
             loss = loss_fn(output, labels)
             running_loss += labels.size(0) * loss.item()
 
             for i, guess in enumerate(output):
-               # predicted_class = guess.argmax()  # Get predicted class index
-               # true_class = labels[i]  # Use the actual class label (not one-hot)
                 if step == 0:
                     pred_indices = torch.Tensor([guess.argmax()])
                     targ_indices = torch.Tensor([labels[i].argmax()])
