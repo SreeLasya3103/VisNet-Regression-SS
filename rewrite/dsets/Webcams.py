@@ -171,7 +171,7 @@ class Webcams_cls_10(Dataset):
         self.augment = augment
         
         tmp_files.sort()
-        Random(37).shuffle(tmp_files)
+        Random(36).shuffle(tmp_files)
         
         counts = dict.fromkeys(limits, 0)
         
@@ -183,7 +183,10 @@ class Webcams_cls_10(Dataset):
             string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
             float_value = float(string_value)
             float_value = min(float_value, 10.0)
-            
+
+            if float_value == 0.0:
+                continue
+
             match float_value:
                 case 1.0:
                     class_index = 0
@@ -285,6 +288,71 @@ class Webcams_cls_3(Dataset):
                 class_index = 2
                 
             label = torch.zeros((3)).float()
+            label[class_index] = 1.0
+            
+            if float_value in limits:
+                if counts[float_value] < limits[float_value]:
+                    self.files.append(img_path)
+                    self.labels.append(label)
+                    counts[float_value] += 1
+            else:
+                self.files.append(img_path)
+                self.labels.append(label)
+                
+                    
+                
+    def __len__(self):
+        return len(self.files)
+    
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+            
+        img_path = self.files[idx]
+        data = io.read_image(img_path, io.ImageReadMode.RGB)/255
+        
+        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+        crop_top = ceil(0.1281 * data.size(1))
+        crop_bot = 3
+        sub_vert = crop_top + crop_bot
+        dims = (data.size(1)-sub_vert, data.size(2)-6)
+        data = f.crop(data, crop_top, 2, dims[0], dims[1])
+        data = self.transform(data, self.augment)
+        data = data.float()
+        
+        return (data, self.labels[idx])
+
+class Webcams_cls_1_10(Dataset):
+    def __init__(self, dataset_dir, transform=lambda x, augment:x, augment=False, limits=dict()):
+        if isinstance(dataset_dir, list):
+            tmp_files = dataset_dir
+        else:
+            tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+        self.files = []
+        self.labels = []
+        self.transform = transform
+        self.augment = augment
+        
+        tmp_files.sort()
+        Random(37).shuffle(tmp_files)
+        
+        counts = dict.fromkeys(limits, 0)
+        
+        for i in range(len(tmp_files)):
+            img_path = tmp_files[i]
+            string_value = path.basename(img_path)
+            string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
+            float_value = float(string_value)
+            float_value = min(float_value, 10.0)
+            
+            if float_value <= 1.25:
+                class_index = 0
+            elif float_value >= 10.0:
+                class_index = 1
+            else:
+                continue
+                
+            label = torch.zeros((2)).float()
             label[class_index] = 1.0
             
             if float_value in limits:

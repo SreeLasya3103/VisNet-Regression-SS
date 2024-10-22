@@ -121,17 +121,31 @@ def highpass_mask(mask_radius, dim):
             w_dist = abs(w-center[1]) / mask_radius[1]
             distance = math.sqrt(h_dist**2 + w_dist**2)
             distance = min(1.0, distance)
-            mask[h][w] = distance**8
-    
-    return mask
-    
+            # if distance < 1.0:
+            #     mask[h][w] = 0.0
 
-def highpass_filter(img, mask_radius=0.1):
+            mask[h][w] = distance**6
+    return mask
+
+@functools.cache
+def bandpass_mask(mask_radii, dim):
+    mask = highpass_mask(mask_radii[0], dim) + lowpass_mask(mask_radii[1], dim)
+    mask = (mask - 1.0) * -1.0
+
+    return mask
+
+@functools.cache
+def lowpass_mask(mask_radius, dim):
+    mask = (highpass_mask(mask_radius, dim) - 1.0) * -1.0
+
+    return mask
+
+def pass_filter(img, mask):
     orig_dim = (img.size(0), img.size(1))
     fft = torch.fft.fft2(img)
     fft = torch.fft.fftshift(fft)
 
-    mask = highpass_mask(mask_radius, fft.shape)
+    # mask = highpass_mask(mask_radius, fft.shape)
 
     fft = fft*mask
     
@@ -139,32 +153,9 @@ def highpass_filter(img, mask_radius=0.1):
     fft = torch.fft.ifft2(fft, orig_dim)
     fft = fft.type(torch.float32)
     
-    
     fft = torch.clamp(fft, 0.0, 1.0)
     
     return fft
-
-def satmap(orig):
-    img = orig.permute(1,2,0).contiguous()
-    
-    for h in range(img.shape[0]):
-        for w in range(img.shape[1]):
-            mx = mn = img[h][w][0]
-            if img[h][w][1] > mx:
-                mx = img[h][w][1]
-            elif img[h][w][1] < mn:
-                mn = img[h][w][1]
-            
-            if img[h][w][2] > mx:
-                mx = img[h][w][2]
-            elif img[h][w][2] < mn:
-                mn = img[h][w][2]
-            
-            orig[2][h][w] = 0.0
-            if mx != 0.0:
-                orig[2][h][w] = 1.0 - mn
-    
-    return orig
 
 def get_tf_function(dim):
     def transform(img, agmnt=False):
@@ -174,16 +165,27 @@ def get_tf_function(dim):
         img = img.repeat(3, 1, 1, 1)
         
         img[1] = torch.from_numpy(PC_CMAP(img[1][2])).permute((2,0,1))[:3,:,:]
-        # img[0] = torch.zeros((3, *dim))
-        # img[1] = torch.zeros((3, *dim))
-        # img[1] = torch.from_numpy(PC_CMAP(satmap(img[1])[2])).permute((2,0,1))[:3,:,:]
-        # plt.imshow(img[1].permute(1,2,0))
-        # plt.show()
-        # img[1] = torch.zeros(img[0].shape, dtype=torch.float32)
         
-        img[2][2] = highpass_filter(img[2][2], 0.05)
-        img[2] = torch.from_numpy(PC_CMAP(img[2][2])).permute((2,0,1))[:3,:,:]
-        # img[2] = highpass_filter(img[2][2], 0.05)
+        pass_points = (0.25, 0.125)
+
+        img[2][0] = pass_filter(img[2][2], lowpass_mask(pass_points[1], img[2][2].shape))
+        img[2][0] = (img[2][0] - torch.mean(img[2][0])) / torch.std(img[2][0])
+
+        img[2][1] = pass_filter(img[2][2], bandpass_mask(pass_points, img[2][2].shape))
+        img[2][1] = (img[2][1] - torch.mean(img[2][1])) / torch.std(img[2][1])
+        
+        img[2][2] = pass_filter(img[2][2], highpass_mask(pass_points[0], img[2][2].shape))
+        img[2][2] = (img[2][2] - torch.mean(img[2][2])) / torch.std(img[2][2])
+
+        # img[2][0] = torch.zeros(img[2][2].shape)
+        # img[2][1] = torch.zeros(img[2][2].shape)
+        # img[2][2] = torch.zeros(img[2][2].shape)
+
+        # img[2][0] = lowpass_mask(pass_points[1], img[2][2].shape)
+        # img[2][1] = bandpass_mask(pass_points, img[2][2].shape)
+        # img[2][2] = highpass_mask(pass_points[0], img[2][2].shape)
+
+        # img[2] = torch.from_numpy(PC_CMAP(img[2][2])).permute((2,0,1))[:3,:,:]
         
         return img
     

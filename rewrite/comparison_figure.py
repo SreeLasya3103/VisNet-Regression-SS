@@ -16,15 +16,15 @@ import torch
 import pickle
 from models import VisNet
 
-LIMITS = {1.0:0, 1.25:0, 1.5:0, 1.75:0, 2.0:0, 2.25:0, 2.5:0, 3.0:0, 4.0:0, 5.0:0, 6.0:0, 7.0:0, 8.0:0, 9.0:0, 10.0:2000}
+LIMITS = {1.0:0, 1.25:0, 1.5:0, 1.75:0, 2.0:0, 2.25:0, 2.5:0, 3.0:99, 4.0:0, 5.0:0, 6.0:0, 7.0:0, 8.0:0, 9.0:0, 10.0:0}
 
-w = 39
-h = 39
-which = 0
+w = 3
+h = 3
+which = 2
 
 dsets = []
 
-dsets.append(Webcams_cls('/home/feet/Documents/LAWN/datasets/Webcams', limits=LIMITS, transform=VisNet.get_tf_function((309,470))))
+dsets.append(Webcams_cls('/home/feet/Documents/LAWN/datasets/Webcams', limits=LIMITS, transform=VisNet.get_tf_function((280,280))))
 
 loaded_images = []
 
@@ -46,7 +46,7 @@ for y in range(h):
     else:
         final_image = torch.cat((final_image, row), 1)
 
-tv.utils.save_image(final_image, "/home/feet/Documents/result stuff/9-3-24/compositeclassimages/10MI-images.jpg")
+tv.utils.save_image(final_image, "/home/feet/Documents/LAWN/result-stuff/10-08-24/3MI.jpg")
     
 
 # for i in range(10):

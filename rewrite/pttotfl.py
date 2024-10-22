@@ -3,17 +3,16 @@ import onnx
 import tensorflow as tf
 import onnx_tf
 import models.RMEP
-import models.VisNet_BIT
 import numpy as np
 
-empty = torch.zeros((3,128,128))
+empty = torch.zeros((3,280,280))
 
-model = models.VisNet_BIT.Model(10,3)
-model.load_state_dict(torch.load('/home/feet/Documents/LAWN/Visibility-Networks/rewrite/visnetaio.plt'))
+model = models.RMEP.Model(10, 3, empty, empty)
+model.load_state_dict(torch.load('/home/feet/Documents/LAWN/runs/Sep26_20-43-28_lessland/best-loss.pt'))
 model.eval()
-model_name = "VisNet_BIT"
+model_name = "RMEP"
 
-input_shape = (1,3,128,128)
+input_shape = (1,3,280,280)
 rand_input = torch.from_numpy(np.random.random_sample(input_shape)).to(torch.float32)
 print(model(rand_input))
 

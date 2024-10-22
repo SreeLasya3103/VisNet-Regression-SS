@@ -1,19 +1,19 @@
 import torch
 import torch.nn as nn
-from dsets import Webcams
-from models import RMEP
+from dsets import *
+from models import *
 from torch.optim import lr_scheduler as sched
-import models.VisNetReduced
 from simloss import SimLoss
 
 CONFIG = {
-    'model module': RMEP,
+    'model module': VisNetKAN,
     # height x width
     'dimensions': (128,128),
     # number of classes to predict, use 1 for regression
     'classes': 10,
     # used for generated figures
     'class names': ('1.0','2.0', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0'),
+    # 'class names': ('1.0','10.0'),
     # nunmber of color channels in image, usually either 1 or 3
     'channels': 3,
     # percent split between training, validation, and test sets
@@ -45,12 +45,13 @@ CONFIG = {
     # parameters for constructing the dataset. Dependent on what dataset is being used.
     ## In the case of the webcams dataset, the limits are the maximum number of images from each class to be used.
     'dataset params': {
-      'limits': {1.0:10, 1.25:20, 1.5:0, 1.75:20, 2.0:20, 2.25:20, 2.5:0, 3.0:20, 4.0:20, 5.0:20, 6.0:20, 7.0:20, 8.0:20, 9.0:20, 10.0:20}
+      'limits': {1.0:999, 1.25:999, 1.5:0, 1.75:999, 2.0:250, 2.25:999, 2.5:0, 3.0:500, 4.0:500, 5.0:500, 6.0:500, 7.0:500, 8.0:500, 9.0:500, 10.0:500}
+      # 'limits': {1.0:999, 1.25:999,10.0:500}
     },
     # name is just used in recording data
     'dataset name': 'Webcams cls 10',
     # path to the folder containing the images
-    'dataset path': 'C:\\Users\\PC\\Desktop\\VisNet\\Visibility-Networks\\rewrite\\WebcamsSample',
+    'dataset path': '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/',
     # whether or not to apply random augmentation to images to effectively increase size of the training set
     'augment': True,
     # make each batch have an even number of each class. Ignore this
