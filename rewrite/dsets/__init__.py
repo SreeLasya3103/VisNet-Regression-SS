@@ -1,1 +1,1 @@
-from . import FCS, Jacobs, SSF, Webcams
+from . import FCS, Jacobs, SSF, Webcams, FROSI

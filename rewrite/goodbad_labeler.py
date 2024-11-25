@@ -29,7 +29,7 @@ def labelImage(imgPath, label, imgIterator, gB, uB, bB, panel):
 
 #Make it go through images randomly with an even amount from each class
 
-dset = Webcams_cls('/home/feet/Documents/LAWN/datasets/Webcams/', limits={1.0:300, 1.25:300, 1.5:300, 1.75:300, 2.0:300, 2.25:300, 2.5:300, 3.0:300, 4.0:300, 5.0:300, 6.0:300, 7.0:300, 8.0:300, 9.0:300, 10.0:300, })
+dset = Webcams_cls('/home/feet/Documents/LAWN/datasets/Webcams/', limits={1.0:300, 1.25:300, 1.5:300, 1.75:300, 2.0:300, 2.25:300, 2.5:300, 3.0:300, 4.0:300, 5.0:300, 6.0:300, 7.0:300, 8.0:300, 9.0:300, 10.0:300})
 files = dset.files
 imgIter = iter(files)
 

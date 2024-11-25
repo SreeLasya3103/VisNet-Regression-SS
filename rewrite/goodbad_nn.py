@@ -14,17 +14,17 @@ import sys
 from progress.bar import Bar
 
 DSET_DIR = '/home/feet/Documents/LAWN/datasets/Webcams'
-MODEL_PATH = '/home/feet/Documents/LAWN/Visibility-Networks/rewrite/goodbad-bestloss1.pt'
+MODEL_PATH = '/home/feet/Documents/LAWN/Visibility-Networks/rewrite/goodbad-bestloss.pt'
 LABELED_DSET_PATH = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams'
 CLEANED_DSET_PATH = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/by-network'
 
 USE_CUDA = True
 EPOCHS = 100
 BATCH_SIZE = 8
-LR = 0.0000005
+LR = 0.000001
 IMG_RES = (310,470)
-MAX_GOOD = 300
-MAX_BAD = 300
+MAX_GOOD = 319
+MAX_BAD = 319
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -48,7 +48,7 @@ class GoodBadWebcams(Dataset):
 
         self.augment = False
 
-        self.tf = tf.RandomHorizontalFlip()
+        self.tf = tf.Compose((tf.RandomHorizontalFlip(), tf.RandomRotation(10)))
         
     def __len__(self):
         return len(self.img_label_pairs)
@@ -206,7 +206,7 @@ def clean_dset():
                 label = 'bad'
 
             cntningDir = os.path.basename(os.path.dirname(img))
-            newDir = os.path.join(LABELED_DSET_PATH, label, cntningDir)
+            newDir = os.path.join(CLEANED_DSET_PATH, label, cntningDir)
             if not os.path.isdir(newDir):
                 os.makedirs(newDir)
             

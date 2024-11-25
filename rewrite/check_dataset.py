@@ -4,7 +4,7 @@ import dsets
 import dsets.Webcams
 from torch.utils.data import Dataset, DataLoader
 
-dset_dir = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/bad'
+dset_dir = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/by-network/good/'
 
 class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')
 # class_names = ('1.0', '2.0', '3.0', '4.0', '5.0', '6.0', '7.0', '8.0', '9.0', '10.0')

@@ -66,7 +66,7 @@ print('Calculating mean...')
 sample = train_set.__getitem__(0)[0]
 mean = torch.zeros(sample.size(), dtype=torch.float32)
 
-train_loader = DataLoader(train_set, 32, False, num_workers=0)
+train_loader = DataLoader(train_set, 32, False, num_workers=4)
 
 bar = Bar()
 bar.max = len(train_loader)

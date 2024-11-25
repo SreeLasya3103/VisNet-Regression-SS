@@ -89,7 +89,10 @@ class Webcams_cls(Dataset):
             if site_or and site_or not in string_value:
                 continue;
             string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
-            float_value = float(string_value)
+            if string_value == '10+':
+                float_value = 10.0
+            else:
+                float_value = float(string_value)
             float_value = min(float_value, 10.0)
                 
             match float_value:
@@ -181,7 +184,10 @@ class Webcams_cls_10(Dataset):
             if site_or and site_or not in string_value:
                 continue;
             string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
-            float_value = float(string_value)
+            if string_value == '10+':
+                float_value = 10.0
+            else:
+                float_value = float(string_value)
             float_value = min(float_value, 10.0)
 
             if float_value == 0.0:

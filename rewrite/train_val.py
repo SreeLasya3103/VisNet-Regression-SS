@@ -51,7 +51,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
     
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -193,7 +193,7 @@ def train_cls(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     writer.close()
 
 def val_cls(dataset, batch_size, accum_steps, model, use_cuda, loss_fn, num_classes):
-    val_loader = DataLoader(dataset, batch_size, True, num_workers=0, pin_memory=True)
+    val_loader = DataLoader(dataset, batch_size, True, num_workers=4, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -284,7 +284,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
 
     writer.add_hparams(hparams, {})
 
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -382,7 +382,7 @@ def train_reg(train_set: Dataset, val_set: Dataset, test_set: Dataset, model: nn
     writer.close()
 
 def val_reg(dataset, batch_size, accum_steps, model, use_cuda, loss_fn):
-    val_loader = DataLoader(dataset, batch_size, True, num_workers=0, pin_memory=True)
+    val_loader = DataLoader(dataset, batch_size, True, num_workers=4, pin_memory=True)
 
     if use_cuda:
         model.cuda()
@@ -474,7 +474,7 @@ def train_cls_bb(train_set: Dataset, val_set: Dataset, test_set: Dataset, model:
         if train_set[i].__len__() > train_set[largest_set].__len__():
             largest_set = i
     
-    train_loader = DataLoader(train_set[largest_set], subbatch_size, True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_set[largest_set], subbatch_size, True, num_workers=4, pin_memory=True)
     
     if use_cuda:
         model.cuda()
@@ -633,7 +633,7 @@ def train_cls_bb2(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
         if train_set[i].__len__() < train_set[smallest_set].__len__():
             smallest_set = i
     
-    train_loader = DataLoader(train_set[smallest_set], subbatch_size, True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_set[smallest_set], subbatch_size, True, num_workers=4, pin_memory=True)
     
     if use_cuda:
         model.cuda()
@@ -791,7 +791,7 @@ def train_cls_all(train_set: Dataset, val_set: Dataset, test_set: Dataset, model
 
     writer.add_hparams(hparams, {})
     
-    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=0, pin_memory=True)
+    train_loader = DataLoader(train_set, subbatch_size, True, num_workers=4, pin_memory=True)
 
     if use_cuda:
         model.cuda()
