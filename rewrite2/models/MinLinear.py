@@ -6,7 +6,10 @@ class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
 
-        self.normalize = tf.Normalize(mean, std)
+        if mean is None or std is None:
+            self.normalize = nn.Identity()
+        else:
+            self.normalize = tf.Normalize(mean, std)
 
         model = [nn.Conv2d(num_channels, 16, 3),
                  nn.MaxPool2d(2,2)]

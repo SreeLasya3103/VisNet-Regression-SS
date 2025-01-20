@@ -52,6 +52,9 @@ epochs = CONFIG['epochs']
 class_names = CONFIG['class names']
 output_fn = CONFIG['output function']
 labels_fn = CONFIG['label function']
+existing_model = CONFIG['existing model']
+test_only = CONFIG['test only']
+buckets = CONFIG['buckets']
 
 writer = SummaryWriter()
 
@@ -82,8 +85,8 @@ if num_classes > 1:
 
     for i in range(len(dset.files)):
         class_idx = dset.labels[i].argmax()
-        class_lists[class_idx][0].append(dset.files[i])
-        class_lists[class_idx][1].append(dset.labels[i])
+        class_lists[0][class_idx].append(dset.files[i])
+        class_lists[1][class_idx].append(dset.labels[i])
 
     train_files = []
     val_files = []
@@ -93,7 +96,7 @@ if num_classes > 1:
     val_labels = []
     test_labels = []
 
-    for i in range(len(class_lists)[0]):
+    for i in range(len(class_lists[0])):
         train_point = int(splits[0] * len(class_lists[0][i]))
         val_point = int(splits[1] * len(class_lists[0][i]) + train_point)
         
@@ -138,27 +141,38 @@ sample = train_set.__getitem__(0)[0]
 mean = torch.zeros(sample.size(), dtype=torch.float32)
 std = torch.ones(sample.size(), dtype=torch.float32)
 
-if normalize:
-    print('Calculating mean and standard deviation...')
-    variance = torch.zeros(sample.size(), dtype=torch.float32)
+if existing_model is None:
+    if normalize:
+        print('Calculating mean and standard deviation...')
 
-    loader = DataLoader(train_set, subbatch_size, num_workers=num_workers)
+        variance = torch.zeros(sample.size(), dtype=torch.float32)
 
-    bar = ChargingBar()
-    bar.max = len(loader)
-    bar.width = 0
-    spinner = Spinner()
+        loader = DataLoader(train_set, subbatch_size, num_workers=num_workers)
 
-    for data, _ in loader:
-        mean += torch.div(torch.sum(data, 0), len(train_set))
-        variance += torch.div(torch.sum(torch.square(data-mean), dim=0), len(train_set)-1)
+        bar = ChargingBar()
+        bar.max = len(loader)
+        bar.width = 0
+        spinner = Spinner()
 
-        bar.next()
-        spinner.next()
+        for data, _, _ in loader:
+            mean += torch.div(torch.sum(data, 0), len(train_set))
+            variance += torch.div(torch.sum(torch.square(data-mean), dim=0), len(train_set)-1)
 
-    std = torch.sqrt(variance).apply_(lambda x: 1.0 if x == 0.0 else x)
+            bar.next()
+            spinner.next()
 
-model = ModelClass(num_classes, num_channels, mean, std).train()
+        std = torch.sqrt(variance).apply_(lambda x: 1.0 if x == 0.0 else x)
+        std[std==0.0] = 1.0
+
+    model = ModelClass(num_classes, num_channels, mean, std).train()
+    model(torch.unsqueeze(sample, 0))
+
+else:
+    model = ModelClass(num_classes, num_channels, mean, std)
+    model(torch.unsqueeze(sample, 0))
+    model.load_state_dict(torch.load(existing_model, weights_only=True, map_location=torch.device('cpu')))
+    model.train()
+
 if use_cuda:
     model.cuda()
 else:
@@ -166,10 +180,13 @@ else:
 
 optimizer = OptimizerClass(model.parameters(), **optimizer_params)
 
+if test_only:
+    epochs = 1
+    loaders = (None, loaders[1], loaders[2])
+
 if num_classes > 1:
     tv.train_cls(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, class_names, output_fn, labels_fn, writer)
 elif num_classes == 1:
-    tv.train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, output_fn, labels_fn, writer)
+    tv.train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, output_fn, labels_fn, writer, buckets=buckets, class_names=class_names)
 else:
     print('Number of classes must be > 0')
-

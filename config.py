@@ -8,7 +8,7 @@ from simloss import SimLoss
 CONFIG = {
     'model module': VisNet,
     # height x width
-    'dimensions': (60,140),
+    'dimensions': (120,160),
     # number of classes to predict, use 1 for regression
     'classes': 7,
     # used for generated figures

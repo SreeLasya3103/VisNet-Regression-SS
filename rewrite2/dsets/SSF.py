@@ -62,7 +62,7 @@ class SSF_reg(Dataset):
         
         return (data, label)
         
-class SSF_cls(Dataset):
+class SSF_cls_10(Dataset):
     def __init__(self, dataset_dir, transformer, limits=dict()):
         self.transformer = transformer
 
@@ -72,13 +72,12 @@ class SSF_cls(Dataset):
             return
         
         tmp_files = glob(path.normpath(dataset_dir + '/**/*.jpg'), recursive=True)
-        
-        tmp_files.sort()
-        Random(36).shuffle(tmp_files)
-
         self.files = []
         self.labels = []
         labels_dict = None
+        
+        tmp_files.sort()
+        Random(36).shuffle(tmp_files)
         
         with open(path.join(dataset_dir, 'label.csv'), mode='r') as infile:
             reader = csv.reader(infile)
@@ -92,34 +91,34 @@ class SSF_cls(Dataset):
             dict_key = path.basename(img_path)[-19:]
             vis = torch.tensor([[labels_dict[dict_key]]])
             
-            if vis >= 9.75:
+            if vis > 9.5:
                 vis = 10.0
                 class_index = 9
-            elif 9.25 >= vis >= 8.75:
+            elif vis > 8.5:
                 vis = 9.0
                 class_index = 8
-            elif 8.25 >= vis >= 7.75:
+            elif vis > 7.5:
                 vis = 8.0
                 class_index = 7
-            elif 7.25 >= vis >= 6.75:
+            elif vis > 6.5:
                 vis = 7.0
                 class_index = 6
-            elif 6.25 >= vis >= 5.75:
+            elif vis > 5.5:
                 vis = 6.0
                 class_index = 5
-            elif 5.25 >= vis >= 4.75:
+            elif vis > 4.5:
                 vis = 5.0
                 class_index = 4
-            elif 4.25 >= vis >= 3.75:
+            elif vis > 3.5:
                 vis = 4.0
                 class_index = 3
-            elif 3.25 >= vis >= 2.75:
+            elif vis > 2.5:
                 vis = 3.0
                 class_index = 2
-            elif 2.25 >= vis >= 1.75:
+            elif vis > 1.5:
                 vis = 2.0
                 class_index = 1   
-            elif 1.25 >= vis >= 0.75:
+            elif vis >= 0:
                 vis = 1.0
                 class_index = 0
             else:
@@ -150,6 +149,6 @@ class SSF_cls(Dataset):
         data = self.transformer(data)
         data = data.float()
 
-        label = self.labels[idx]
+        label = torch.tensor(self.labels[idx]).float()
         
-        return (data, label)
+        return (data, label, img_path)

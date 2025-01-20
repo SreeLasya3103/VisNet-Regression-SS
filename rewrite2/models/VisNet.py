@@ -16,8 +16,9 @@ PC_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list('', ['#000000', '#
 class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
- 
-        self.normalize = tf.Normalize(mean, std)
+
+        self.register_buffer('mean', mean)
+        self.register_buffer('std', std)
         
         def conv_1(): 
             return [nn.Conv2d(num_channels, 64, 1),
@@ -63,7 +64,7 @@ class Model(nn.Module):
         self.linear = nn.Sequential(*linear)
         
     def forward(self, x):
-        x = self.normalize(x)
+        x = (x - self.mean) / self.std
         x = x.permute((1, 0, 2, 3, 4))
         
         fft = self.fft_1(x[2])
@@ -94,22 +95,39 @@ class Model(nn.Module):
 @functools.cache
 def highpass_mask(mask_radius, dim):
     mask = torch.ones(dim, dtype=torch.float32)
-    mask_radius = np.multiply(dim, mask_radius)
     center = ((dim[0]-1)/2, (dim[1]-1)/2)
     center_tl = np.subtract(np.floor(center), mask_radius).astype(int)
     center_br = np.add(np.ceil(center), mask_radius).astype(int)
     
     for h in range(center_tl[0], center_br[0]):
         for w in range(center_tl[1], center_br[1]):
-            h_dist = abs(h-center[0]) / mask_radius[0]
-            w_dist = abs(w-center[1]) / mask_radius[1]
+            h_dist = abs(h-center[0])
+            w_dist = abs(w-center[1])
             distance = math.sqrt(h_dist**2 + w_dist**2)
-            distance = min(1.0, distance)
-            # if distance < 1.0:
-            #     mask[h][w] = 0.0
+            distance = distance
+            if distance < mask_radius:
+                mask[h][w] = 0.0
 
-            mask[h][w] = distance**6
     return mask
+
+# def highpass_mask(mask_radius, dim):
+#     mask = torch.ones(dim, dtype=torch.float32)
+#     mask_radius = np.multiply(dim, mask_radius)
+#     center = ((dim[0]-1)/2, (dim[1]-1)/2)
+#     center_tl = np.subtract(np.floor(center), mask_radius).astype(int)
+#     center_br = np.add(np.ceil(center), mask_radius).astype(int)
+    
+#     for h in range(center_tl[0], center_br[0]):
+#         for w in range(center_tl[1], center_br[1]):
+#             h_dist = abs(h-center[0]) / mask_radius[0]
+#             w_dist = abs(w-center[1]) / mask_radius[1]
+#             distance = math.sqrt(h_dist**2 + w_dist**2)
+#             distance = min(1.0, distance)
+#             # if distance < 1.0:
+#             #     mask[h][w] = 0.0
+
+#             mask[h][w] = distance**6
+#     return mask
 
 @functools.cache
 def bandpass_mask(mask_radii, dim):
@@ -145,7 +163,7 @@ def get_tf_function():
 
         img[1] = torch.from_numpy(PC_CMAP(img[1][2])).permute((2,0,1))[:3,:,:]
         
-        pass_points = (0.25, 0.125)
+        pass_points = (0.25, 0.0)
 
         # img[2][0] = pass_filter(img[2][2], lowpass_mask(pass_points[1], img[2][2].shape))
         # img[2][0] = (img[2][0] - torch.mean(img[2][0])) / torch.std(img[2][0])

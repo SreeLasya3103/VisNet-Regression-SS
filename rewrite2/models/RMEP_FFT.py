@@ -33,9 +33,10 @@ class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
         
-        self.register_buffer('mean', mean)
-        self.register_buffer('std', std)
-        self.normalize = tf.Normalize(mean, std)
+        if mean is None or std is None:
+            self.normalize = nn.Identity()
+        else:
+            self.normalize = tf.Normalize(mean, std)
 
         img_dim = (mean.size(1), mean.size(2))
         

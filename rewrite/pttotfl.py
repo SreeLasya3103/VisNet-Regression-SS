@@ -1,16 +1,17 @@
 import torch
 import onnx
 import tensorflow as tf
+import torchvision as tv
 import onnx_tf
 import models.RMEP
 import numpy as np
 
 empty = torch.zeros((3,280,280))
 
-model = models.RMEP.Model(10, 3, empty, empty)
-model.load_state_dict(torch.load('/home/feet/Documents/LAWN/runs/Sep26_20-43-28_lessland/best-loss.pt'))
+model = tv.models.resnet34(num_classes=1)
+model.load_state_dict(torch.load('/home/feet/Documents/LAWN/Visibility-Networks/rewrite/goodbad-bestloss.pt'))
 model.eval()
-model_name = "RMEP"
+model_name = "goodbadresnet"
 
 input_shape = (1,3,280,280)
 rand_input = torch.from_numpy(np.random.random_sample(input_shape)).to(torch.float32)

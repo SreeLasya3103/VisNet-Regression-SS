@@ -22,7 +22,7 @@ USE_CUDA = True
 EPOCHS = 100
 BATCH_SIZE = 8
 LR = 0.000001
-IMG_RES = (310,470)
+IMG_RES = (280,280)
 MAX_GOOD = 319
 MAX_BAD = 319
 
@@ -214,4 +214,4 @@ def clean_dset():
 
             bar.next()
                 
-clean_dset()
+train()

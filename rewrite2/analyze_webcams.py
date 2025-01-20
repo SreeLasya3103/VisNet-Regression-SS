@@ -14,7 +14,8 @@ import pandas as pd
 
 class_values = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0)
 dset_dir = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/by-network/good'
-limits = {1.0:400, 1.25:400, 1.5:0, 1.75:200, 2.0:200, 2.25:999, 2.5:0, 3.0:400, 4.0:400, 5.0:400, 6.0:400, 7.0:400, 8.0:400, 9.0:400, 10.0:400}
+# limits = {1.0:400, 1.25:400, 1.5:0, 1.75:200, 2.0:200, 2.25:999, 2.5:0, 3.0:400, 4.0:400, 5.0:400, 6.0:400, 7.0:400, 8.0:400, 9.0:400, 10.0:400}
+limits = dict()
 
 info_list = []
 dset = Webcams.Webcams_cls_10(dset_dir, lambda x: x, limits)
@@ -97,21 +98,40 @@ for info in info_list:
 # plt.show()
 
 
-#Y: SITES X: VIS
-for i, site in enumerate(site_counts):
-    total = site_counts[site]
-    site_vis_counts[site] = {k: v / total for k, v in site_vis_counts[site].items()}
+#Y: SITES X: VISfor i, site in enumerate(site_counts):
+#     total = site_counts[site]
+#     site_vis_counts[site] = {k: v / total for k, v in site_vis_counts[site].items()}
 
-data = np.zeros((len(site_counts), 10), dtype=float)
+# data = np.zeros((len(site_counts), 10), dtype=float)
 
-for i, site in enumerate(site_counts.keys()):
-    for j in range(10):
-        data[i][j] = site_vis_counts[site][float(j+1)]
+# for i, site in enumerate(site_counts.keys()):
+#     for j in range(10):
+#         data[i][j] = site_vis_counts[site][float(j+1)]
 
-data = data.swapaxes(1, 0)
-data_frame = pd.DataFrame(data, index=class_values)
-# plt.figure(dpi=300)
-plot = sns.heatmap(data_frame, annot=False, vmin=0.0, vmax=1.0)
-plot.set_xlabel("Site")
-plot.set_ylabel("Visibility")
-plt.show()
+# data = data.swapaxes(1, 0)
+# data_frame = pd.DataFrame(data, index=class_values)
+# # plt.figure(dpi=300)
+# plot = sns.heatmap(data_frame, annot=False, vmin=0.0, vmax=1.0)
+# plot.set_xlabel("Site")
+# plot.set_ylabel("Visibility")
+# plt.show()
+
+# data = np.zeros((len(site_counts), 10), dtype=float)
+
+# for i, site in enumerate(site_counts.keys()):
+#     for j in range(10):
+#         data[i][j] = site_vis_counts[site][float(j+1)]
+
+# data = data.swapaxes(1, 0)
+# data_frame = pd.DataFrame(data, index=class_values)
+# # plt.figure(dpi=300)
+# plot = sns.heatmap(data_frame, annot=False, vmin=0.0, vmax=1.0)
+# plot.set_xlabel("Site")
+# plot.set_ylabel("Visibility")
+# plt.show()
+
+# for site in site_counts.keys():
+#     print(site, site_counts[site], sep=',')
+
+for site in site_vis_counts.keys():
+    print(site, '"'+str(site_vis_counts[site])+'"', site_counts[site], sep=',')

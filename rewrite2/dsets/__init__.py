@@ -1,1 +1,1 @@
-from . import Webcams, SSF, FROSI, FCS, Jacobs
+from . import Webcams, SSF, FROSI, FCS, Jacobs, WebcamSSFCombo

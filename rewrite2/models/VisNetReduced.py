@@ -18,7 +18,8 @@ class Model(nn.Module):
     def __init__(self, num_classes, num_channels, mean, std):
         super(Model, self).__init__()
  
-        self.normalize = tf.Normalize(mean, std)
+        self.register_buffer('mean', mean)
+        self.register_buffer('std', std)
         
         def conv_1(): 
             return [nn.Conv2d(num_channels, 32, 1),
@@ -64,7 +65,7 @@ class Model(nn.Module):
         self.linear = nn.Sequential(*linear)
         
     def forward(self, x):
-        x = self.normalize(x)
+        x = (x - self.mean) / self.std
         x = x.permute((1, 0, 2, 3, 4))
         
         fft = self.fft_1(x[2])
