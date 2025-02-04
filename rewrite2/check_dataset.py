@@ -4,6 +4,9 @@ import dsets
 import dsets.WebcamSSFCombo
 import dsets.Webcams
 from torch.utils.data import Dataset, DataLoader
+import shutil
+import os
+import os.path as path
 
 dset_dir1 = '/home/feet/Documents/LAWN/datasets/SSF'
 dset_dir2 = '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/by-network/good'
@@ -15,8 +18,8 @@ class_names = ('1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5', '3.0', '4.0',
 
 # dataset = dsets.Webcams.Webcams_cls_10_full(dset_dir2, transformer=lambda x:x, limits={1.5:220, 1.75:210, 2.0:210, 2.5:210, 3.0:630, 4.0:630, 5.0:630, 6.0:630, 7.0:630, 8.0:630, 9.0:630, 10.0:630})
 # dataset = dsets.Webcams.Webcams_cls(dset_dir2, transformer=lambda x:x)
-dataset = dsets.WebcamSSFCombo.WebcamsSSF_cls_10((dset_dir2, dset_dir1), transformer=lambda x:x, limits=({1.5:220, 1.75:210, 2.0:210, 2.5:210, 3.0:630, 4.0:630, 5.0:630, 6.0:630, 7.0:630, 8.0:630, 9.0:630, 10.0:630}, {1.0:300, 2.0:300, 3.0:300, 4.0:300, 5.0:300, 6.0:300, 7.0:300, 8.0:300, 9.0:300, 10.0:300}))
-# dataset = dsets.Webcams.Webcams_cls_10(dset_dir, transformer=lambda x:x, limits={1.75:220, 2.0:220, 3.0:440, 4.0:440, 5.0:440, 6.0:440, 7.0:440, 8.0:440, 9.0:440, 10.0:440})
+# dataset = dsets.WebcamSSFCombo.WebcamsSSF_cls_10((dset_dir2, dset_dir1), transformer=lambda x:x, limits=({1.5:220, 1.75:210, 2.0:210, 2.5:210, 3.0:630, 4.0:630, 5.0:630, 6.0:630, 7.0:630, 8.0:630, 9.0:630, 10.0:630}, {1.0:300, 2.0:300, 3.0:300, 4.0:300, 5.0:300, 6.0:300, 7.0:300, 8.0:300, 9.0:300, 10.0:300}))
+dataset = dsets.Webcams.Webcams_cls_10(dset_dir2, transformer=lambda x:x, limits={1.0:265, 1.25:256, 1.5:0, 1.75:250, 2.0:250, 2.25:57, 2.5:0, 3.0:520, 4.0:520, 5.0:520, 6.0:520, 7.0:520, 8.0:520, 9.0:520, 10.0:520})
 # dataset = dsets.SSF.SSF_cls_10(dset_dir, lambda x:x, limits={1.0:300, 2.0:300, 3.0:300, 4.0:300, 5.0:300, 6.0:300, 7.0:300, 8.0:300, 9.0:300, 10.0:300})
 dataloader = DataLoader(dataset, 1, False)
 
@@ -37,4 +40,11 @@ for name, count in counts_list:
     print(count, end=', ')
 print('')
 
+copy_folder = '/home/feet/Documents/LAWN/datasets/Webcams-sample'
+for file in dataset.files:
+    parent_folder = path.basename(path.dirname(file))
+    if not path.isdir(copy_folder + '/' + parent_folder):
+        os.makedirs(copy_folder + '/' + parent_folder)
+    
+    shutil.copy(file, copy_folder + '/' + parent_folder + '/')
 # 1.0: 135, 2.0: 200, 3.0: 263, 4.0: 254, 5.0: 313, 6.0: 382, 7.0: 450, 8.0: 407, 9.0: 7648, 10.0: 2193

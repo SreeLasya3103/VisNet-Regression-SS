@@ -47,16 +47,13 @@ class FROSI(Dataset):
         return len(self.files)
     
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-            
         img_path =  self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
         
         data = self.transformer(data)
         data = data.float()
 
-        label = self.labels[idx]
+        label = torch.Tensor(self.labels[idx])
         
-        return (data, label)
+        return (data, label, img_path)
         
