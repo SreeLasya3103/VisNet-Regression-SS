@@ -8,10 +8,10 @@ import numpy as np
 
 empty = torch.zeros((3,280,280))
 
-model = tv.models.resnet34(num_classes=1)
-model.load_state_dict(torch.load('/home/feet/Documents/LAWN/Visibility-Networks/rewrite/goodbad-bestloss.pt'))
+model = models.RMEP.Model(10, 3, empty, empty)
+model.load_state_dict(torch.load('/home/feet/Documents/LAWN/Visibility-Networks/rewrite2/runs/BestRMEP/best-loss.pt'))
 model.eval()
-model_name = "goodbadresnet"
+model_name = "bestrmep"
 
 input_shape = (1,3,280,280)
 rand_input = torch.from_numpy(np.random.random_sample(input_shape)).to(torch.float32)
