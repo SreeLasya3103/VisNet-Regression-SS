@@ -86,7 +86,7 @@ if num_classes > 1:
     for i in range(len(dset.files)):
         class_idx = dset.labels[i].argmax()
         class_lists[0][class_idx].append(dset.files[i])
-        class_lists[1][class_idx].append(dset.labels[i])
+        class_lists[1][class_idx].append(np.asarray(dset.labels[i], dtype="object"))
 
     train_files = []
     val_files = []

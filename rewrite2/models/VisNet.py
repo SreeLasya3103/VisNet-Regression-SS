@@ -164,7 +164,7 @@ def get_tf_function():
 
         img[1] = torch.from_numpy(PC_CMAP(img[1][2])).permute((2,0,1))[:3,:,:]
         
-        pass_points = (0.20, 0.0)
+        pass_points = (0.0, 0.0)
 
         # img[2][0] = pass_filter(img[2][2], lowpass_mask(pass_points[1], img[2][2].shape))
         # img[2][0] = (img[2][0] - torch.mean(img[2][0])) / torch.std(img[2][0])
@@ -173,7 +173,7 @@ def get_tf_function():
         # img[2][1] = (img[2][1] - torch.mean(img[2][1])) / torch.std(img[2][1])
         
         img[2][2] = pass_filter(img[2][2], highpass_mask(pass_points[0], img[2][2].shape))
-        img[2][2] = (img[2][2] - torch.mean(img[2][2])) / torch.std(img[2][2])
+        # img[2][2] = (img[2][2] - torch.mean(img[2][2])) / torch.std(img[2][2])
 
         # img[2][0] = torch.zeros(img[2][2].shape)
         # img[2][1] = torch.zeros(img[2][2].shape)
@@ -184,6 +184,9 @@ def get_tf_function():
         # img[2][2] = highpass_mask(pass_points[0], img[2][2].shape)
 
         img[2] = torch.from_numpy(PC_CMAP(img[2][2])).permute((2,0,1))[:3,:,:]
+
+        # plt.imshow(img[2].permute(1,2,0))
+        # plt.show()
         
         return img
     
