@@ -31,7 +31,7 @@ CONFIG = {
     'splits': (0.70, 0.15, 0.15),
     # batch size = subbatch size * accum steps. Batches are split up into smaller batches when there is not enough memory for an entire batch
     'subbatch size': 8,
-    'subbatch count': 2, 
+    'subbatch count': 4, 
     # whether or not to use the GPU
     'cuda': True,
     # instance of loss function to be used in training
@@ -71,11 +71,11 @@ CONFIG = {
       # 'max_images': 5000
     },
     # path to the folder containing the images
-    'dataset path': '/home/feet/Documents/LAWN/datasets/quality-labeled-webcams/by-network/good',
+    'dataset path': "C:\\Users\\sm380923\\Desktop\\Research\\good",
     # whether or not to apply random augmentation to images to effectively increase size of the training set
     'augment': True,
     'normalize': True,
-    'num workers': 4,
+    'num workers': 0,
     'output function': None,
     'label function': None
 }
