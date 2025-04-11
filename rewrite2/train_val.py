@@ -1,459 +1,197 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from progress.bar import ChargingBar
 from progress.spinner import Spinner
-import progress.counter
 from torch.utils.tensorboard.writer import SummaryWriter
-import torch.nn.functional as f
-import torcheval.metrics as tem
+import torch.nn.functional as F
 import torcheval.metrics.functional as temf
-from torcheval.metrics.functional import r2_score, multiclass_confusion_matrix
-import math
-from os import path
+from torcheval.metrics.functional import multiclass_confusion_matrix
 import matplotlib.pyplot as plt
-# from matplotlib.figure import Figure
-import seaborn as sn
+import seaborn as sns
 import pandas as pd
-from itertools import cycle
-from torchvision.utils import save_image
+import json
+from collections import defaultdict
+from sklearn.metrics import classification_report, confusion_matrix
 import os
-import csv
 
-def train_cls(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, class_names, output_fn, labels_fn, writer):
-    sn.set_theme(font_scale=0.4)
-
+def train_cls(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, class_names, output_fn, labels_fn, writer, transform):
+    sns.set_theme(font_scale=0.4)
     best_loss = float('inf')
 
     for epoch in range(epochs):
-        print('\nEpoch ' + str(epoch+1))
+        print(f"\nEpoch {epoch+1}")
 
-        loader = loaders[0]
-        if loader is not None:
-            print('Training...')
-            
-            model.train()
+        # ─── TRAIN ────────────────────────────────────────
+        model.train()
+        train_loader = loaders[0]
+        all_outputs, all_labels = [], []
+        running_loss = 0.0
 
-            all_outputs = None
-            all_labels = None
-            all_paths = []
+        bar = ChargingBar("Training", max=len(train_loader), width=0)
+        for step, (data, labels, _) in enumerate(train_loader):
+            if use_cuda:
+                data, labels = data.cuda(), labels.cuda()
+            # Wrap single image type into a 3-type input if needed
+            #if data.ndim == 4:
+                #data = data.unsqueeze(1)  # [B, 1, C, H, W]
+                #data = data.repeat(1, 3, 1, 1, 1)  # [B, 3, C, H, W]
+                #data = data.permute(1, 0, 2, 3, 4)  # [3, B, C, H, W]
+            if data.ndim == 4:  # [B, C, H, W]
+            #Apply transform manually to each image
+              batch = []
+              for i in range(data.size(0)):
+                  batch.append(transform(data[i]))  # output: [3, C, H, W]
+                  data = torch.stack(batch, dim=1)  # [3, B, C, H, W]
+            output = model(data)
+            if output_fn: output = output_fn(output)
+            if labels_fn: labels = labels_fn(labels)
 
-            running_loss = 0.0
-            
-            bar = ChargingBar()
-            bar.max = len(loader)
-            bar.width = 0
-            spinner = Spinner()
+            loss = loss_fn(output, labels)
+            loss.backward()
+            running_loss += loss.item() * labels.size(0) / len(train_loader.dataset)
 
-            for step, (data, labels, paths) in enumerate(loader):
-                if use_cuda:
-                    data = data.cuda()
-                    labels = labels.cuda()
+            if (step + 1) % subbatch_count == 0 or (step + 1) == len(train_loader):
+                optimizer.step()
+                optimizer.zero_grad()
 
-                output = model(data)
+            all_outputs.append(output.detach().cpu())
+            all_labels.append(labels.detach().cpu())
+            bar.next()
+        bar.finish()
 
-                if output_fn:
-                    output = output_fn(output)
-                if labels_fn:
-                    labels = labels_fn(labels)
+        all_outputs = torch.cat(all_outputs)
+        all_labels = torch.cat(all_labels)
+        train_loss = running_loss
+        train_acc = temf.multiclass_accuracy(all_outputs, torch.argmax(all_labels, 1)).item()
+        print(f"Training loss: {train_loss:.4f} | accuracy: {train_acc:.4f}")
 
-                loss = loss_fn(output, labels)
-                loss.backward()
-                running_loss += loss.item() * labels.size(0) / len(loader.dataset)
+        writer.add_scalar('Loss/train', train_loss, epoch+1)
+        writer.add_scalar('Acc/train', train_acc, epoch+1)
 
-                if (step+1) % subbatch_count == 0 or (step+1) == len(loader):
-                    optimizer.step()
-                    optimizer.zero_grad()
-                
-                if step == 0:
-                    all_outputs = output.detach().clone()
-                    all_labels = labels.detach().clone()
-                else:
-                    all_outputs = torch.cat((all_outputs, output.detach().clone()), 0)
-                    all_labels = torch.cat((all_labels, labels.detach().clone()), 0)
-                
-                bar.next()
-                spinner.next()
+        cm = multiclass_confusion_matrix(all_outputs, torch.argmax(all_labels, 1), all_labels.size(1), normalize='true')
+        _log_confmat(cm, class_names, writer, f'ConfMat/train', epoch+1)
 
-            all_outputs = all_outputs.cpu()
-            all_labels = all_labels.cpu()
+        torch.save(model.state_dict(), os.path.normpath(writer.get_logdir() + '/last.pt'))
 
-            training_loss = running_loss
-            training_acc = temf.multiclass_accuracy(all_outputs, torch.argmax(all_labels, 1)).item()
-            print('\nTraining loss: ' + str(training_loss))
-            print('Training accuracy: ' + str(training_acc))
+        # ─── VALIDATION ──────────────────────────────────
+        print('Validating...')
+        val_data = valtest_cls(loaders[1], model, loss_fn, use_cuda, output_fn, labels_fn, class_names, writer, epoch+1, stage='val')
+        writer.add_scalar('Loss/val', val_data['loss'], epoch+1)
+        writer.add_scalar('Acc/val', val_data['acc'], epoch+1)
 
-            training_confmat = multiclass_confusion_matrix(all_outputs, torch.argmax(all_labels, 1), all_labels.size(1), normalize='true')
-            tcm = pd.DataFrame(training_confmat, index=class_names, columns=class_names)
-            plt.figure(dpi = 300)
-            plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-            plot.set_xlabel('Predicted Value')
-            plot.set_ylabel('True Value')
-            writer.add_figure('ConfMat/train', plt.gcf(), epoch+1)
-
-            writer.add_scalar('Loss/train', training_loss, epoch+1)
-            writer.add_scalar('Acc/train', training_acc, epoch+1)
-
-            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
-
-            print('Validating...')
-            validation_data = valtest_cls(loaders[1], model, loss_fn, use_cuda, output_fn, labels_fn)
-
-            validation_loss = validation_data['loss']
-            validation_acc = validation_data['acc']
-            print('\nValidation loss: ' + str(validation_loss))
-            print('Validation accuracy: ' + str(validation_acc))
-
-            validation_confmat = validation_data['confmat']
-            tcm = pd.DataFrame(validation_confmat, index=class_names, columns=class_names)
-            plt.figure(dpi = 300)
-            plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-            plot.set_xlabel('Predicted Value')
-            plot.set_ylabel('True Value')
-            writer.add_figure('ConfMat/val', plt.gcf(), epoch+1)
-
-            writer.add_scalar('Loss/val', validation_loss, epoch+1)
-            writer.add_scalar('Acc/val', validation_acc, epoch+1)
-
+        # ─── TESTING ─────────────────────────────────────
         print('Testing...')
-        testing_data = valtest_cls(loaders[2], model, loss_fn, use_cuda, output_fn, labels_fn)
+        test_data = valtest_cls(loaders[2], model, loss_fn, use_cuda, output_fn, labels_fn, class_names, writer, epoch+1, stage='test')
+        writer.add_scalar('Loss/test', test_data['loss'], epoch+1)
+        writer.add_scalar('Acc/test', test_data['acc'], epoch+1)
 
-        testing_loss = testing_data['loss']
-        testing_acc = testing_data['acc']
+        if test_data['loss'] < best_loss:
+            best_loss = test_data['loss']
+            torch.save(model.state_dict(), os.path.normpath(writer.get_logdir() + '/best-loss.pt'))
 
-        testing_confmat = testing_data['confmat']
-        tcm = pd.DataFrame(testing_confmat, index=class_names, columns=class_names)
-        plt.figure(dpi = 300)
-        plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-        plot.set_xlabel('Predicted Value')
-        plot.set_ylabel('True Value')
-        writer.add_figure('ConfMat/test', plt.gcf(), epoch+1)
-        
-        writer.add_scalar('Loss/test', testing_loss, epoch+1)
-        writer.add_scalar('Acc/test', testing_acc, epoch+1)
-
-        if testing_loss < best_loss:
-            if loader is not None: 
-                best_loss = testing_loss
-                torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
-
-            with open(path.normpath(writer.get_logdir()+'/confs.csv'), 'w') as out_file:
-                out_file.write(testing_data['confs'])
-
-        writer.flush()
+            with open(os.path.normpath(writer.get_logdir() + '/confs.csv'), 'w') as f:
+                f.write(test_data['confs'])
 
     writer.close()
+    return test_data
 
-@torch.inference_mode
-def valtest_cls(loader, model, loss_fn, use_cuda, output_fn, labels_fn):
+
+@torch.inference_mode()
+def valtest_cls(loader, model, loss_fn, use_cuda, output_fn, labels_fn, class_names, writer, epoch, stage='test'):
     model.eval()
-
+    all_outputs, all_labels, all_paths = [], [], []
     running_loss = 0.0
 
-    all_outputs = None
-    all_labels = None
-    all_paths = None
-
-    bar = ChargingBar()
-    bar.max = len(loader)
-    bar.width = 0
-    spinner = Spinner()
-
+    bar = ChargingBar(f"{stage.capitalize()}", max=len(loader), width=0)
     for step, (data, labels, paths) in enumerate(loader):
         if use_cuda:
-            data = data.cuda()
-            labels = labels.cuda()
-
+            data, labels = data.cuda(), labels.cuda()
         output = model(data)
-
-        if output_fn:
-            output = output_fn(output)
-        if labels_fn:
-            labels = labels_fn(labels)
+        if output_fn: output = output_fn(output)
+        if labels_fn: labels = labels_fn(labels)
 
         loss = loss_fn(output, labels)
         running_loss += loss.item() * labels.size(0) / len(loader.dataset)
-        
-        if step == 0:
-            all_outputs = output.detach().clone()
-            all_labels = labels.detach().clone()
-            all_paths = paths
-        else:
-            all_outputs = torch.cat((all_outputs, output.detach().clone()), 0)
-            all_labels = torch.cat((all_labels, labels.detach().clone()), 0)
-            all_paths += paths
 
+        all_outputs.append(output.detach().cpu())
+        all_labels.append(labels.detach().cpu())
+        all_paths += paths
         bar.next()
-        spinner.next()
+    bar.finish()
 
-    all_outputs = all_outputs.cpu()
-    all_labels = all_labels.cpu()
+    all_outputs = torch.cat(all_outputs)
+    all_labels = torch.cat(all_labels)
+    sm = F.softmax(all_outputs, dim=1)
 
     loss = running_loss
     acc = temf.multiclass_accuracy(all_outputs, torch.argmax(all_labels, 1)).item()
-    
     confmat = multiclass_confusion_matrix(all_outputs, torch.argmax(all_labels, 1), all_labels.size(1), normalize='true')
 
     confidences_string = 'predicted,truth,output,top,path\n'
-    sm = torch.nn.functional.softmax(all_outputs, 1)
+    site_preds, site_labels = defaultdict(list), defaultdict(list)
+
     for i in range(sm.size(0)):
-        predicted = torch.argmax(sm[i]).item()
-        label = torch.argmax(all_labels[i]).item()
-        line = str(predicted) + ',' + str(label) + ',"' + str(sm[i]) + '",' + str(sm[i][predicted].item()) + ',' + all_paths[i] + '\n'
-        confidences_string += line
+        pred = torch.argmax(sm[i]).item()
+        true = torch.argmax(all_labels[i]).item()
+        path = all_paths[i]
+        confidences_string += f"{pred},{true},\"{sm[i]}\",{sm[i][pred].item()},{path}\n"
+        site_id = path.split('_')[0]
+        site_preds[site_id].append(pred)
+        site_labels[site_id].append(true)
 
-    return {'loss':loss, 'acc':acc, 'confmat':confmat, 'confs':confidences_string}
+    # Per-site evaluation
+    site_metrics = []
+    for site_id in site_preds:
+        preds = site_preds[site_id]
+        trues = site_labels[site_id]
+        report = classification_report(trues, preds, output_dict=True, zero_division=0)
+        cm = confusion_matrix(trues, preds, labels=list(range(len(class_names))))
+        site_metrics.append({
+            'site': site_id,
+            'accuracy': report['accuracy'],
+            'macro_f1': report['macro avg']['f1-score'],
+            'macro_precision': report['macro avg']['precision'],
+            'macro_recall': report['macro avg']['recall'],
+            'confusion_matrix': cm.tolist()
+        })
 
-def train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, output_fn, labels_fn, writer, **kwargs):
-    sn.set_theme(font_scale=0.4)
+        df_cm = pd.DataFrame(cm, index=class_names, columns=class_names)
+        import matplotlib.pyplot as plt
+        plt.close('all') 
+        fig = plt.figure(dpi=300)
+        sns.heatmap(df_cm, annot=True, fmt=".2f", vmin=0, vmax=1, cmap="Blues")
+        plt.title(f'{stage.upper()} ConfMat - {site_id}')
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        plt.tight_layout()
+        writer.add_figure(f'PerSite/{stage}_ConfMat/{site_id}', fig, global_step=epoch)
+        plt.close(fig)
 
-    best_loss = float('inf')
+    # Save results
+    df = pd.DataFrame(site_metrics)
+    df.drop(columns='confusion_matrix').to_csv(f"site_metrics_{stage}.csv", index=False)
+    with open(f"site_confmats_{stage}.json", "w") as f:
+        json.dump(site_metrics, f, indent=2)
 
-    for epoch in range(epochs):
-        print('\nEpoch ' + str(epoch+1))
+    return {
+        'loss': loss,
+        'acc': acc,
+        'confmat': confmat,
+        'confs': confidences_string,
+        'site_metrics': site_metrics
+    }
 
-        loader = loaders[0]
-        if loader is not None:
-            print('Training...')
-            
-            model.train()
 
-            all_outputs = None
-            all_labels = None
-
-            running_loss = 0.0
-
-            bar = ChargingBar()
-            bar.max = len(loader)
-            bar.width = 0
-            spinner = Spinner()
-
-            for step, (data, labels, paths) in enumerate(loader):
-                if use_cuda:
-                    data = data.cuda()
-                    labels = labels.cuda()
-
-                output = model(data)
-
-                if output_fn:
-                    output = output_fn(output)
-                if labels_fn:
-                    labels = labels_fn(labels)
-
-                loss = loss_fn(output, labels)
-                loss.backward()
-                running_loss += loss.item() * labels.size(0) / len(loader.dataset)
-
-                if (step+1) % subbatch_count == 0 or (step+1) == len(loader):
-                    optimizer.step()
-                    optimizer.zero_grad()
-                
-                if step == 0:
-                    all_outputs = output.detach().clone()
-                    all_labels = labels.detach().clone()
-                else:
-                    all_outputs = torch.cat((all_outputs, output.detach().clone()), 0)
-                    all_labels = torch.cat((all_labels, labels.detach().clone()), 0)
-
-                
-                bar.next()
-                spinner.next()
-
-            all_outputs = all_outputs.cpu()
-            all_labels = all_labels.cpu()
-
-            training_loss = running_loss
-            training_mae = torch.abs(torch.subtract(all_outputs, all_labels))
-            training_mae = torch.mean(training_mae).item()
-            training_mse = torch.square(torch.subtract(all_outputs, all_labels))
-            training_mse = torch.mean(training_mse).item()
-            training_rmse = math.sqrt(training_mse)
-            training_mape = torch.abs(torch.subtract(all_outputs, all_labels))
-            training_mape = torch.div(training_mape, all_labels)
-            training_mape = torch.mean(training_mape).item()
-
-            if 'class_names' in kwargs and 'buckets' in kwargs and kwargs['buckets'] is not None:
-                class_names = kwargs['class_names']
-                buckets = kwargs['buckets']
-                classified_outputs = torch.zeros(all_outputs.size(0), dtype=torch.int64)
-                classified_labels = torch.zeros(all_labels.size(0), dtype=torch.int64)
-                for i in range(classified_outputs.size(0)):
-                    for j, bucket in enumerate(buckets):
-                        if bucket[0] <= all_outputs[i].item() < bucket[1]:
-                            classified_outputs[i] = j
-                        if bucket[0] <= all_labels[i].item() < bucket[1]:
-                            classified_labels[i] = j
-                
-                training_confmat = multiclass_confusion_matrix(classified_outputs, classified_labels, len(buckets), normalize='true')
-                tcm = pd.DataFrame(training_confmat, index=class_names, columns=class_names)
-                plt.figure(dpi = 300)
-                plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-                plot.set_xlabel('Predicted Value')
-                plot.set_ylabel('True Value')
-                writer.add_figure('ConfMat/train', plt.gcf(), epoch+1)
-
-            print('\nTraining loss: ' + str(training_loss))
-            print('Training MAE: ' + str(training_mae))
-            print('Training MSE: ' + str(training_mse))
-            print('Training RMSE: ' + str(training_rmse))
-            print('Training MAPE: ' + str(training_mape))
-
-            writer.add_scalar('Loss/train', training_loss, epoch+1)
-            writer.add_scalar('MAE/train', training_mae, epoch+1)
-            writer.add_scalar('MSE/train', training_mse, epoch+1)
-            writer.add_scalar('RMSE/train', training_rmse, epoch+1)
-            writer.add_scalar('MAPE/train', training_mape, epoch+1)
-
-            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/last.pt'))
-
-            print('Validating...')
-            if 'class_names' in kwargs and 'buckets' in kwargs and kwargs['buckets'] is not None:
-                validation_data = valtest_reg(loaders[1], model, loss_fn, use_cuda, output_fn, labels_fn, buckets=kwargs['buckets'])
-            else:
-                validation_data = valtest_reg(loaders[1], model, loss_fn, use_cuda, output_fn, labels_fn)
-
-            validation_loss = validation_data['loss']
-            validation_mae = validation_data['mae']
-            validation_mse = validation_data['mse']
-            validation_rmse = validation_data['rmse']
-            validation_mape = validation_data['mape']
-
-            if 'class_names' in kwargs and 'buckets' in kwargs and kwargs['buckets'] is not None:                
-                validation_confmat = validation_data['confmat']
-                tcm = pd.DataFrame(validation_confmat, index=class_names, columns=class_names)
-                plt.figure(dpi = 300)
-                plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-                plot.set_xlabel('Predicted Value')
-                plot.set_ylabel('True Value')
-                writer.add_figure('ConfMat/val', plt.gcf(), epoch+1)
-
-            print('\nValidation loss: ' + str(validation_loss))
-            print('Validation MAE: ' + str(validation_mae))
-            print('Validation MSE: ' + str(validation_mse))
-            print('Validation RMSE: ' + str(validation_rmse))
-            print('Validation MAPE: ' + str(validation_mape))
-
-            writer.add_scalar('Loss/val', validation_loss, epoch+1)
-            writer.add_scalar('MAE/val', validation_mae, epoch+1)
-            writer.add_scalar('MSE/val', validation_mse, epoch+1)
-            writer.add_scalar('RMSE/val', validation_rmse, epoch+1)
-            writer.add_scalar('MAPE/val', validation_mape, epoch+1)
-
-        print('Testing...')
-        if 'class_names' in kwargs and 'buckets' in kwargs and kwargs['buckets'] is not None:
-            testing_data = valtest_reg(loaders[2], model, loss_fn, use_cuda, output_fn, labels_fn, buckets=kwargs['buckets'])
-        else:
-            testing_data = valtest_reg(loaders[2], model, loss_fn, use_cuda, output_fn, labels_fn)
-
-        testing_loss = testing_data['loss']
-        testing_mae = testing_data['mae']
-        testing_mse = testing_data['mse']
-        testing_rmse = testing_data['rmse']
-        testing_mape = testing_data['mape']
-
-        if 'class_names' in kwargs and 'buckets' in kwargs and kwargs['buckets'] is not None:                
-            testing_confmat = testing_data['confmat']
-            tcm = pd.DataFrame(testing_confmat, index=class_names, columns=class_names)
-            plt.figure(dpi = 300)
-            plot = sn.heatmap(tcm, annot=True, vmin=0.0, vmax=1.0)
-            plot.set_xlabel('Predicted Value')
-            plot.set_ylabel('True Value')
-            writer.add_figure('ConfMat/test', plt.gcf(), epoch+1)
-
-        writer.add_scalar('Loss/test', testing_loss, epoch+1)
-        writer.add_scalar('MAE/test', testing_mae, epoch+1)
-        writer.add_scalar('MSE/test', testing_mse, epoch+1)
-        writer.add_scalar('RMSE/test', testing_rmse, epoch+1)
-        writer.add_scalar('MAPE/test', testing_mape, epoch+1)
-
-        if testing_loss < best_loss:
-            best_loss = validation_loss
-            torch.save(model.state_dict(), path.normpath(writer.get_logdir()+'/best-loss.pt'))
-
-            with open(path.normpath(writer.get_logdir()+'/outputs.csv'), 'w') as out_file:
-                out_file.write(testing_data['outputs'])
-
-        writer.flush()
-
-    writer.close()
-
-@torch.inference_mode
-def valtest_reg(loader, model, loss_fn, use_cuda, output_fn, labels_fn, **kwargs):
-    model.eval()
-
-    running_loss = 0.0
-
-    all_outputs = None
-    all_labels = None
-    all_paths = None
-
-    bar = ChargingBar()
-    bar.max = len(loader)
-    bar.width = 0
-    spinner = Spinner()
-
-    for step, (data, labels, paths) in enumerate(loader):
-        if use_cuda:
-            data = data.cuda()
-            labels = labels.cuda()
-
-        output = model(data)
-
-        if output_fn:
-            output = output_fn(output)
-        if labels_fn:
-            labels = labels_fn(labels)
-
-        loss = loss_fn(output, labels)
-        running_loss += loss.item() * labels.size(0) / len(loader.dataset)
-        
-        if step == 0:
-            all_outputs = output.detach().clone()
-            all_labels = labels.detach().clone()
-            all_paths = paths
-        else:
-            all_outputs = torch.cat((all_outputs, output.detach().clone()), 0)
-            all_labels = torch.cat((all_labels, labels.detach().clone()), 0)
-            all_paths += paths
-
-        bar.next()
-        spinner.next()
-
-    all_outputs = all_outputs.cpu()
-    all_labels = all_labels.cpu()
-
-    loss = running_loss
-    mae = torch.abs(torch.subtract(all_outputs, all_labels))
-    mae = torch.mean(mae).item()
-    mse = torch.square(torch.subtract(all_outputs, all_labels))
-    mse = torch.mean(mse).item()
-    rmse = math.sqrt(mse)
-    mape = torch.abs(torch.subtract(all_outputs, all_labels))
-    mape = torch.div(mape, all_labels)
-    mape = torch.mean(mape).item()
-
-    return_dict = {'loss':loss, 'mae':mae, 'mse':mse, 'rmse':rmse, 'mape':mape}
-
-    outputs_string = 'predicted,truth,path\n'
-    for i in range(all_outputs.size(0)):
-        line = str(all_outputs[i].item()) + ',' + str(all_labels[i].item()) + ',' + all_paths[i] + '\n'
-        outputs_string += line
-
-    return_dict['outputs'] = outputs_string
-
-    if 'buckets' in kwargs and kwargs['buckets'] is not None:
-        buckets = kwargs['buckets']
-        classified_outputs = torch.zeros(all_outputs.size(0), dtype=torch.int64)
-        classified_labels = torch.zeros(all_labels.size(0), dtype=torch.int64)
-        for i in range(classified_outputs.size(0)):
-            for j, bucket in enumerate(buckets):
-                if bucket[0] <= all_outputs[i].item() < bucket[1]:
-                    classified_outputs[i] = j
-                if bucket[0] <= all_labels[i].item() < bucket[1]:
-                    classified_labels[i] = j
-        
-        confmat = multiclass_confusion_matrix(classified_outputs, classified_labels, len(buckets), normalize='true')
-
-        return_dict['confmat'] = confmat
-    
-    return return_dict
+def _log_confmat(confmat, class_names, writer, tag, epoch):
+    df_cm = pd.DataFrame(confmat, index=class_names, columns=class_names)
+    import matplotlib.pyplot as plt
+    plt.close('all') 
+    fig = plt.figure(dpi=300)
+    sns.heatmap(df_cm, annot=True, fmt=".2f", vmin=0.0, vmax=1.0, cmap="Blues")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.title(tag)
+    plt.tight_layout()
+    writer.add_figure(tag, fig, global_step=epoch)
+    plt.close(fig)

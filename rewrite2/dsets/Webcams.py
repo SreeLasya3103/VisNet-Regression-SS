@@ -171,54 +171,55 @@ class Webcams_cls(Dataset):
         return (data, label, img_path)
 
 class Webcams_cls_10(Dataset):
-    def __init__(self, dataset_dir, transformer, limits=dict()):
-        self.transformer = transformer
+    def __init__(self, dataset_dir, transform=lambda x, augment:x, augment=False, limits=dict(), site_filter=None):
+        from glob import glob
+        from random import Random
 
-        if type(dataset_dir) is tuple:
-            self.files = dataset_dir[0]
-            self.labels = dataset_dir[1]
-            return
-        
-        tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+        if isinstance(dataset_dir, list):
+            tmp_files = dataset_dir
+        else: 
+            tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+
         self.files = []
         self.labels = []
+        self.transform = transform
+        self.augment = augment
 
         tmp_files.sort()
         Random(36).shuffle(tmp_files)
-        
-        counts = dict.fromkeys(limits, 0)
-        
-        for i in range(len(tmp_files)):
-            img_path = tmp_files[i]
-            string_value = path.basename(img_path)
-            string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
-            if string_value == '10+':
-                float_value = 10.0
-            else:
-                float_value = float(string_value)
-            float_value = min(float_value, 10.0)
 
-            if float_value == 0.0:
+        counts = dict.fromkeys(limits, 0)
+
+        for img_path in tmp_files:
+            fname = path.basename(img_path)
+
+            # ✅ Extract SITE ID from filename: SITE10_ORNT90_VIS4-0mi.png
+            site_id = fname.split('_')[0]
+            if site_filter is not None and site_id not in site_filter:
                 continue
 
+            # ✅ Extract visibility value
+            try:
+                vis_token = fname.split('_')[2].split('.')[0]
+                string_value = vis_token.split('S')[1].split('m')[0].replace('-', '.')
+                if string_value == '10+':
+                    float_value = 10.0
+                else:
+                    float_value = float(string_value)
+                float_value = min(float_value, 10.0)
+                if float_value == 0.0:
+                    continue
+            except:
+                continue  # skip malformed filenames
+
+            # ✅ Assign class index
             match float_value:
-                case 1.0:
+                case 1.0 | 1.25:
                     class_index = 0
-                case 1.25:
-                    class_index = 0
-                    # float_value = 1.0
-                case 1.5:
-                    continue
-                case 1.75:
+                    float_value = 1.0
+                case 1.75 | 2.0 | 2.25:
                     class_index = 1
-                    # float_value = 2.0
-                case 2.0:
-                    class_index = 1
-                case 2.25:
-                    class_index = 1
-                    # float_value = 2.0
-                case 2.5:
-                    continue
+                    float_value = 2.0
                 case 3.0:
                     class_index = 2
                 case 4.0:
@@ -235,10 +236,12 @@ class Webcams_cls_10(Dataset):
                     class_index = 8
                 case 10.0:
                     class_index = 9
+                case _:
+                    continue  # skip values like 1.5, 2.5
 
             label = torch.zeros((10)).float()
             label[class_index] = 1.0
-            
+
             if float_value in limits:
                 if counts[float_value] < limits[float_value]:
                     self.files.append(img_path)
@@ -247,26 +250,25 @@ class Webcams_cls_10(Dataset):
             else:
                 self.files.append(img_path)
                 self.labels.append(label)
-                
+
     def __len__(self):
         return len(self.files)
-    
-    def __getitem__(self, idx):            
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
         img_path = self.files[idx]
         data = io.read_image(img_path, io.ImageReadMode.RGB)/255
-        
-        #Remove 12.81% top, 3 bottom, 3 left, 3 right
+
+        # Remove borders
         crop_top = ceil(0.1281 * data.size(1))
         crop_bot = 3
         sub_vert = crop_top + crop_bot
         dims = (data.size(1)-sub_vert, data.size(2)-6)
         data = f.crop(data, crop_top, 2, dims[0], dims[1])
-        data = self.transformer(data)
-        data = data.float()
+        data = self.transform(data, self.augment).float()
 
-        label = torch.Tensor(self.labels[idx])
-        
-        return (data, label, img_path)
+        return (data, self.labels[idx], self.files[idx])  # ✅ include path for site detection
 
 class Webcams_cls_5(Dataset):
     def __init__(self, dataset_dir, transformer, limits=dict()):
