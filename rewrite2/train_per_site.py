@@ -20,9 +20,9 @@ all_sites = sorted(set([os.path.basename(f).split('_')[0] for f in all_pngs]))
 
 all_results = []
 
-output_dir = "D:\\Research\\VisNet-On-LabPC\\rewrite2"
+output_dir = "D:\\Research\\VisNet-Regression\\rewrite2"
 os.makedirs(output_dir, exist_ok=True)
-csv_path = os.path.join(output_dir, "All_Sites_Metrics.csv")
+csv_path = os.path.join(output_dir, "Final_Details.csv")
 
 resize_fn = get_resize_crop_fn((280, 280))
 visnet_tf = get_tf_function()
