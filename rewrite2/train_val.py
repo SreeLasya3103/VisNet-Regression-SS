@@ -182,6 +182,58 @@ def valtest_cls(loader, model, loss_fn, use_cuda, output_fn, labels_fn, class_na
         'site_metrics': site_metrics
     }
 
+from torcheval.metrics.functional import r2_score, mean_squared_error
+
+def train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count,
+              output_fn, labels_fn, writer, transform, buckets=None, class_names=None):
+
+    model.train()
+
+    for epoch in range(epochs):
+        print(f"\nEpoch {epoch+1}")
+        running_loss = 0.0
+        all_preds = []
+        all_targets = []
+
+        train_loader = loaders[0]
+        bar = ChargingBar("Training", max=len(train_loader), width=0)
+        for step, (data, labels, _) in enumerate(train_loader):
+            if use_cuda:
+                data, labels = data.cuda(), labels.cuda()
+            if data.ndim == 4:  # [B, C, H, W]
+                data = torch.stack([transform(data[i]) for i in range(data.size(0))], dim=1)  # [3, B, C, H, W]
+
+            preds = model(data).squeeze()
+            targets = labels.squeeze()
+            loss = loss_fn(preds, targets)
+
+            loss.backward()
+            running_loss += loss.item() * len(targets)
+
+            if (step + 1) % subbatch_count == 0 or (step + 1) == len(train_loader):
+                optimizer.step()
+                optimizer.zero_grad()
+
+            all_preds.append(preds.detach().cpu())
+            all_targets.append(targets.detach().cpu())
+            bar.next()
+        bar.finish()
+
+        preds = torch.cat(all_preds)
+        targets = torch.cat(all_targets)
+
+        epoch_loss = running_loss / len(train_loader.dataset)
+        epoch_r2 = r2_score(preds, targets).item()
+        epoch_mse = mean_squared_error(preds, targets).item()
+
+        print(f"Train Epoch {epoch+1} | Loss: {epoch_loss:.4f} | R²: {epoch_r2:.4f} | MSE: {epoch_mse:.4f}")
+        writer.add_scalar('Loss/train', epoch_loss, epoch+1)
+        writer.add_scalar('R2/train', epoch_r2, epoch+1)
+        writer.add_scalar('MSE/train', epoch_mse, epoch+1)
+
+    return {'r2': epoch_r2, 'mse': epoch_mse}
+
+
 
 def _log_confmat(confmat, class_names, writer, tag, epoch):
     df_cm = pd.DataFrame(confmat, index=class_names, columns=class_names)

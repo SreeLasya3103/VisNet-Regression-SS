@@ -8,7 +8,7 @@ from random import Random
 from math import ceil
 
 class Webcams_reg(Dataset):
-    def __init__(self, dataset_dir, transformer, limits=dict()):
+    def __init__(self, dataset_dir, transformer, limits=dict(), site_filter=None):
         self.transformer = transformer
 
         if type(dataset_dir) is tuple:
@@ -27,6 +27,10 @@ class Webcams_reg(Dataset):
         
         for i in range(len(tmp_files)):
             img_path = tmp_files[i]
+            site_id = path.basename(img_path).split('_')[0]
+            if site_filter is not None and site_id not in site_filter:
+                continue
+
             string_value = path.basename(img_path)
             string_value = string_value.split('_')[2].split('.')[0].split('S')[1].split('m')[0].replace('-', '.')
             if string_value == '10+':
@@ -193,12 +197,10 @@ class Webcams_cls_10(Dataset):
         for img_path in tmp_files:
             fname = path.basename(img_path)
 
-            # ✅ Extract SITE ID from filename: SITE10_ORNT90_VIS4-0mi.png
             site_id = fname.split('_')[0]
             if site_filter is not None and site_id not in site_filter:
                 continue
 
-            # ✅ Extract visibility value
             try:
                 vis_token = fname.split('_')[2].split('.')[0]
                 string_value = vis_token.split('S')[1].split('m')[0].replace('-', '.')
@@ -212,7 +214,6 @@ class Webcams_cls_10(Dataset):
             except:
                 continue  # skip malformed filenames
 
-            # ✅ Assign class index
             match float_value:
                 case 1.0 | 1.25:
                     class_index = 0
@@ -268,7 +269,7 @@ class Webcams_cls_10(Dataset):
         data = f.crop(data, crop_top, 2, dims[0], dims[1])
         data = self.transform(data, self.augment).float()
 
-        return (data, self.labels[idx], self.files[idx])  # ✅ include path for site detection
+        return (data, self.labels[idx], self.files[idx])
 
 class Webcams_cls_5(Dataset):
     def __init__(self, dataset_dir, transformer, limits=dict()):
@@ -397,22 +398,17 @@ class Webcams_cls_3(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-            
-        img_path =  self.files[idx]
-        data = io.read_image(img_path, io.ImageReadMode.RGB)/255
-        
-        #Remove 12.81% top, 3 bottom, 3 left, 3 right
-        crop_top = ceil(0.1281 * data.size(1))
-        crop_bot = 3
-        sub_vert = crop_top + crop_bot
-        dims = (data.size(1)-sub_vert, data.size(2)-6)
-        data = f.crop(data, crop_top, 2, dims[0], dims[1])
-        data = self.transformer(data)
-        data = data.float()
+            img_path =  self.files[idx]
+            data = io.read_image(img_path, io.ImageReadMode.RGB)/255
+            crop_top = ceil(0.1281 * data.size(1))
+            crop_bot = 3
+            sub_vert = crop_top + crop_bot
+            dims = (data.size(1)-sub_vert, data.size(2)-6)
+            data = f.crop(data, crop_top, 2, dims[0], dims[1])
+            data = self.transformer(data).float()
+            label = self.labels[idx]  # already a float tensor like torch.Tensor([4.0])
+            return (data, label, img_path)
 
-        label = torch.tensor(self.labels[idx]).float()
-        
-        return (data, label)
 
 class Webcams_cls_3lmh(Dataset):
     def __init__(self, dataset_dir, transformer, limits=dict()):

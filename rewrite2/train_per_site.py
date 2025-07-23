@@ -8,8 +8,9 @@ from datetime import datetime
 from image_cropping import get_resize_crop_fn
 from models.VisNet import get_tf_function
 from train_val import train_cls
+from train_val import train_reg
 from models import VisNet
-from dsets.Webcams import Webcams_cls_10
+from dsets.Webcams import Webcams_reg
 from glob import glob
 from tqdm import tqdm
 
@@ -33,7 +34,7 @@ for site in tqdm(all_sites, desc="Training all sites"):
     print(f"\n=== Training model for {site} ===")
 
     writer = SummaryWriter(log_dir=f"runs/per_site/{site}_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-    dset = Webcams_cls_10(dataset_path, transform=transform, site_filter=[site])
+    dset = Webcams_reg(dataset_path, transformer=transform, site_filter=[site])
 
     #if len(dset) < 50:
         #print(f"[!] Skipping {site}: Not enough data")
@@ -49,30 +50,38 @@ for site in tqdm(all_sites, desc="Training all sites"):
         DataLoader(test, batch_size=8),
     )
 
-    model = VisNet.Model(num_classes=10, num_channels=3, mean=torch.zeros((3,)), std=torch.ones((3,)))
-    model = model.cpu()
+    model = VisNet.Model(num_classes=1, num_channels=3, mean=torch.zeros((3,)), std=torch.ones((3,)))
+    model = model.cuda() if torch.cuda.is_available() else model
     optimizer = torch.optim.Adam(model.parameters(), lr=5e-7)
 
-    test_data  = train_cls(
+    test_data  = train_reg(
         loaders=loaders,
-        model=model.cpu(),
+        model=model,
         optimizer=optimizer,
-        loss_fn=nn.CrossEntropyLoss(),
+        loss_fn=nn.SmoothL1Loss(),
         epochs=15,
-        use_cuda=False,
+        use_cuda=torch.cuda.is_available(),
         subbatch_count=1,
-        class_names=[str(i) for i in range(1, 11)],
         output_fn=None,
         labels_fn=None,
         writer=writer,
         transform=transform
     )
 
-    if test_data and 'site_metrics' in test_data:
-        for row in test_data['site_metrics']:
-            row['site_id'] = site
-            row['log_dir'] = writer.get_logdir()
-            all_results.append(row)
+    #if test_data and 'site_metrics' in test_data:
+        #for row in test_data['site_metrics']:
+            #row['site_id'] = site
+            #row['log_dir'] = writer.get_logdir()
+            #all_results.append(row)
+
+    if test_data:
+        all_results.append({
+        'site_id': site,
+        'r2': test_data['r2'],
+        'mse': test_data['mse'],
+        'log_dir': writer.get_logdir()
+    })
+
 
     df = pd.DataFrame(all_results)
     df.drop(columns='confusion_matrix', errors='ignore').to_csv(csv_path, index=False)

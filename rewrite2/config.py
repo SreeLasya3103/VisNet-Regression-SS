@@ -16,7 +16,7 @@ CONFIG = {
     # height x width
     'dimensions': (310,470),
     # number of classes to predict, use 1 for regression
-    'num classes': 10,
+    'num classes': 1,
     'buckets': None,
     # 'buckets': ((-999999,3.5), (3.5, 7.5), (7.5, 999999)),
     # used for generated figures
@@ -33,11 +33,11 @@ CONFIG = {
     'subbatch size': 6,
     'subbatch count': 2, 
     # whether or not to use the GPU
-    'cuda': False,
+    'cuda': True,
     # instance of loss function to be used in training
     #'loss function': nn.SmoothL1Loss(),
     # 'loss function': nn.KLDivLoss(reduction='batchmean'),  # Using KLDivLoss
-    'loss function': nn.CrossEntropyLoss(),
+    'loss function': nn.SmoothL1Loss(),
     # optimizer class to be used in training. NOT an instnace of the optimizer
     'optimizer class': torch.optim.Adam,
     # parameters to be used to create instance of above optimizer class
@@ -53,7 +53,7 @@ CONFIG = {
     # number of epochs to train for
     'epochs': 80,
     # dataset class. NOT an instance
-    'dataset class': Webcams.Webcams_cls_10,
+    'dataset class': Webcams.Webcams_reg,
     # parameters for constructing the dataset. Dependent on what dataset is being used.
     ## In the case of the webcams dataset, the limits are the maximum number of images from each class to be used.
     'dataset parameters': {
