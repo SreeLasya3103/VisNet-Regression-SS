@@ -30,10 +30,10 @@ CONFIG = {
     # percent split between training, validation, and test sets
     'splits': (0.70, 0.15, 0.15),
     # batch size = subbatch size * accum steps. Batches are split up into smaller batches when there is not enough memory for an entire batch
-    'subbatch size': 8,
-    'subbatch count': 4, 
+    'subbatch size': 6,
+    'subbatch count': 2, 
     # whether or not to use the GPU
-    'cuda': True,
+    'cuda': False,
     # instance of loss function to be used in training
     #'loss function': nn.SmoothL1Loss(),
     # 'loss function': nn.KLDivLoss(reduction='batchmean'),  # Using KLDivLoss
@@ -71,7 +71,7 @@ CONFIG = {
       # 'max_images': 5000
     },
     # path to the folder containing the images
-    'dataset path': "C:\\Users\\sm380923\\Desktop\\Research\\good",
+    'dataset path': "D:\\Research\\NewGoodOnlyWebcams",
     # whether or not to apply random augmentation to images to effectively increase size of the training set
     'augment': True,
     'normalize': True,

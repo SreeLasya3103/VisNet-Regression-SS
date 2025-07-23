@@ -13,17 +13,17 @@ from dsets.Webcams import Webcams_cls_10
 from glob import glob
 from tqdm import tqdm
 
-dataset_path = "C:\\Users\\sm380923\\Desktop\\Research\\good"
+dataset_path = "D:\\Research\\NewGoodOnlyWebcams"
 all_pngs = glob(os.path.join(dataset_path, "**", "*.png"), recursive=True)
 all_sites = sorted(set([os.path.basename(f).split('_')[0] for f in all_pngs]))
 
 all_results = []
 
-output_dir = "C:\\Users\\sm380923\\Desktop\\Research\\Visibility-Networks\\rewrite2"
+output_dir = "D:\\Research\\VisNet-On-LabPC\\rewrite2"
 os.makedirs(output_dir, exist_ok=True)
 csv_path = os.path.join(output_dir, "All_Sites_Metrics.csv")
 
-resize_fn = get_resize_crop_fn((310, 470))
+resize_fn = get_resize_crop_fn((280, 280))
 visnet_tf = get_tf_function()
 transform = lambda x, augment=False: visnet_tf(resize_fn(x))
 
@@ -50,16 +50,16 @@ for site in tqdm(all_sites, desc="Training all sites"):
     )
 
     model = VisNet.Model(num_classes=10, num_channels=3, mean=torch.zeros((3,)), std=torch.ones((3,)))
-    model = model.cuda() if torch.cuda.is_available() else model
+    model = model.cpu()
     optimizer = torch.optim.Adam(model.parameters(), lr=5e-7)
 
     test_data  = train_cls(
         loaders=loaders,
-        model=model,
+        model=model.cpu(),
         optimizer=optimizer,
         loss_fn=nn.CrossEntropyLoss(),
         epochs=15,
-        use_cuda=torch.cuda.is_available(),
+        use_cuda=False,
         subbatch_count=1,
         class_names=[str(i) for i in range(1, 11)],
         output_fn=None,

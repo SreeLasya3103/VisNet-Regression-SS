@@ -5,7 +5,7 @@ from datetime import datetime
 import csv
 
 class_values = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0)
-dset_dir = "C:\\Users\\sm380923\\Desktop\\Research\\good"
+dset_dir = "D:\\Research\\NewGoodOnlyWebcams"
 limits = dict()
 
 start_date = datetime(2022, 1, 1)

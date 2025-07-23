@@ -152,7 +152,7 @@ def pass_filter(img, mask):
     
     fft = torch.fft.ifftshift(fft)    
     fft = torch.fft.ifft2(fft, orig_dim)
-    fft = fft.type(torch.float32)
+    fft = fft.real.type(torch.float32)
     
     fft = torch.clamp(fft, 0.0, 1.0)
     
