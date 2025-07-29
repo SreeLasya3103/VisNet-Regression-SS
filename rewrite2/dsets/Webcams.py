@@ -16,7 +16,8 @@ class Webcams_reg(Dataset):
             self.labels = dataset_dir[1]
             return
         
-        tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True)
+        tmp_files = glob(path.normpath(dataset_dir + '/**/*.png'), recursive=True) + \
+            glob(path.normpath(dataset_dir + '/**/*.jpg'), recursive=True)
         self.files = []
         self.labels = []
         
@@ -73,8 +74,7 @@ class Webcams_reg(Dataset):
         data = self.transformer(data)
         data = data.float()
 
-        label = torch.Tensor(self.labels[idx])
-        
+        label = self.labels[idx]  # already a Tensor([x]) from __init__
         return (data, label, img_path)
     
 class Webcams_cls(Dataset):

@@ -208,14 +208,15 @@ def train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_cou
             loss = loss_fn(preds, targets)
 
             loss.backward()
-            running_loss += loss.item() * len(targets)
+            running_loss += loss.item() * targets.numel()  # num elements instead of len()
 
             if (step + 1) % subbatch_count == 0 or (step + 1) == len(train_loader):
                 optimizer.step()
                 optimizer.zero_grad()
 
-            all_preds.append(preds.detach().cpu())
-            all_targets.append(targets.detach().cpu())
+            all_preds.append(preds.detach().cpu().view(-1))
+            all_targets.append(targets.detach().cpu().view(-1))
+
             bar.next()
         bar.finish()
 

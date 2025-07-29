@@ -14,9 +14,18 @@ from dsets.Webcams import Webcams_reg
 from glob import glob
 from tqdm import tqdm
 
-dataset_path = "D:\\Research\\NewGoodOnlyWebcams"
-all_pngs = glob(os.path.join(dataset_path, "**", "*.png"), recursive=True)
-all_sites = sorted(set([os.path.basename(f).split('_')[0] for f in all_pngs]))
+from memory_profiler import profile
+
+@profile
+def train():
+    ...
+
+#dataset_path = "D:\\Research\\NewGoodOnlyWebcams"
+dataset_path = "D:\\Research\\VEIA"
+#all_pngs = glob(os.path.join(dataset_path, "**", "*.png"), recursive=True)
+all_jpgs = glob(os.path.join(dataset_path, "**", "*.jpg"), recursive=True)
+#all_sites = sorted(set([os.path.basename(f).split('_')[0] for f in all_pngs]))
+all_sites = sorted(set([os.path.basename(f).split('_')[0] for f in all_jpgs]))
 
 all_results = []
 
@@ -36,16 +45,16 @@ for site in tqdm(all_sites, desc="Training all sites"):
     writer = SummaryWriter(log_dir=f"runs/per_site/{site}_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     dset = Webcams_reg(dataset_path, transformer=transform, site_filter=[site])
 
-    #if len(dset) < 50:
-        #print(f"[!] Skipping {site}: Not enough data")
-        #continue
+    if len(dset) < 10:
+        print(f"[!] Skipping {site}: only {len(dset)} samples.")
+        continue
 
     num_train = int(0.8 * len(dset))
     num_val = int(0.1 * len(dset))
     train, val, test = torch.utils.data.random_split(dset, [num_train, num_val, len(dset) - num_train - num_val])
 
     loaders = (
-        DataLoader(train, batch_size=8, shuffle=True),
+        DataLoader(train, batch_size=8, shuffle=True, num_workers=0),
         DataLoader(val, batch_size=8),
         DataLoader(test, batch_size=8),
     )
@@ -61,7 +70,7 @@ for site in tqdm(all_sites, desc="Training all sites"):
         loss_fn=nn.SmoothL1Loss(),
         epochs=15,
         use_cuda=torch.cuda.is_available(),
-        subbatch_count=1,
+        subbatch_count=4,
         output_fn=None,
         labels_fn=None,
         writer=writer,
