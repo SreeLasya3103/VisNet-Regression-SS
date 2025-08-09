@@ -138,14 +138,12 @@ test_loader = DataLoader(test_set, subbatch_size, True, num_workers=num_workers,
 loaders = (train_loader, val_loader, test_loader)
 
 sample = train_set.__getitem__(0)[0]
-mean = torch.zeros(sample.size(), dtype=torch.float32)
-std = torch.ones(sample.size(), dtype=torch.float32)
+mean = torch.zeros((3, 3), dtype=torch.float32)
+std = torch.zeros((3, 3), dtype=torch.float32)
 
 if existing_model is None:
     if normalize:
         print('Calculating mean and standard deviation...')
-
-        variance = torch.zeros(sample.size(), dtype=torch.float32)
 
         loader = DataLoader(train_set, subbatch_size, num_workers=num_workers)
 
@@ -154,15 +152,24 @@ if existing_model is None:
         bar.width = 0
         spinner = Spinner()
 
+        n = 0
         for data, _, _ in loader:
-            mean += torch.div(torch.sum(data, 0), len(train_set))
-            variance += torch.div(torch.sum(torch.square(data-mean), dim=0), len(train_set)-1)
+            # data shape: [B, 3, 3, H, W]
+            for i in range(3):  # original, PC, FFT
+                for j in range(3):  # RGB channels
+                    channel = data[:, i, j, :, :]  # [B, H, W]
+                    mean[i, j] += channel.mean()
+                    std[i, j] += channel.std()
+            n += 1
 
             bar.next()
             spinner.next()
 
-        std = torch.sqrt(variance).apply_(lambda x: 1.0 if x == 0.0 else x)
-        std[std==0.0] = 1.0
+        mean /= n
+        std /= n
+
+        # Prevent divide by zero
+        std[std == 0.0] = 1.0
 
     model = ModelClass(num_classes, num_channels, mean, std).train()
     model(torch.unsqueeze(sample, 0))
@@ -187,6 +194,6 @@ if test_only:
 if num_classes > 1:
     tv.train_cls(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, class_names, output_fn, labels_fn, writer)
 elif num_classes == 1:
-    tv.train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, output_fn, labels_fn, writer, buckets=buckets, class_names=class_names)
+    tv.train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_count, output_fn, labels_fn, writer, transform=transformer, buckets=buckets, class_names=class_names)
 else:
     print('Number of classes must be > 0')
