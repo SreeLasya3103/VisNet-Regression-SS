@@ -64,7 +64,10 @@ class Model(nn.Module):
         self.linear = nn.Sequential(*linear)
         
     def forward(self, x):
-        x = (x - self.mean.view(1, 3, 3, 1, 1)) / self.std.view(1, 3, 3, 1, 1)
+        mean = self.mean.repeat(3) if self.mean.numel() == 3 else self.mean
+        std = self.std.repeat(3) if self.std.numel() == 3 else self.std
+        x = (x - mean.view(1, 3, 3, 1, 1)) / std.view(1, 3, 3, 1, 1)
+
         x = x.permute((1, 0, 2, 3, 4))
         
         fft = self.fft_1(x[2])

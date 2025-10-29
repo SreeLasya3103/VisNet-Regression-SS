@@ -200,7 +200,12 @@ def train_reg(loaders, model, optimizer, loss_fn, epochs, use_cuda, subbatch_cou
         for step, (data, labels, _) in enumerate(train_loader):
             if use_cuda:
                 data = data.cuda()
-                labels = torch.stack(labels).float().cuda()
+                if isinstance(labels, list):
+                    labels = torch.stack(labels).float().cuda()
+                else:
+                    labels = labels.float().cuda()
+
+
             if data.ndim == 4:  # [B, C, H, W]
                 data = torch.stack([transform(img) for img in data], dim=0).permute(1, 0, 2, 3, 4)
 
